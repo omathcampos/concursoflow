@@ -5,7 +5,7 @@ import { generateWeeklyOccurrences } from "@/lib/domain/blocks";
 import { nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
 import { IDLE_TIMER, pauseTimer, resumeTimer, startTimer, stopTimer, type TimerState } from "@/lib/domain/timer";
 import type { CycleSetupEntry, DeleteScope } from "@/lib/data/repository";
-import type { Annotation, Block, Cycle, CycleEntry, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 function uid(): string {
   return crypto.randomUUID();
@@ -25,6 +25,7 @@ export interface LocalState {
   sessions: Session[];
   reviews: Review[];
   timer: TimerState;
+  profile: Profile;
 
   createSubject: (input: Omit<Subject, "id" | "createdAt">) => Subject;
   updateSubject: (id: string, patch: Partial<Omit<Subject, "id" | "createdAt">>) => Subject;
@@ -57,6 +58,8 @@ export interface LocalState {
   completeReview: (id: string) => void;
   skipReview: (id: string) => void;
 
+  updateProfile: (patch: Partial<Pick<Profile, "displayName" | "targetExam" | "examDate">>) => Profile;
+
   startTimerFor: (subjectId: string) => void;
   pauseTimerNow: () => void;
   resumeTimerNow: () => void;
@@ -77,6 +80,7 @@ export const useLocalStore = create<LocalState>()(
       sessions: [],
       reviews: [],
       timer: IDLE_TIMER,
+      profile: { id: "local", displayName: null, targetExam: null, examDate: null, createdAt: now() },
 
       createSubject: (input) => {
         const subject: Subject = { id: uid(), createdAt: now(), ...input };
@@ -328,6 +332,15 @@ export const useLocalStore = create<LocalState>()(
       },
       skipReview: (id) => {
         get().updateReview(id, { status: "skipped" });
+      },
+
+      updateProfile: (patch) => {
+        let updated: Profile | undefined;
+        set((state) => {
+          updated = { ...state.profile, ...patch };
+          return { profile: updated };
+        });
+        return updated!;
       },
 
       startTimerFor: (subjectId) => set({ timer: startTimer(subjectId) }),
