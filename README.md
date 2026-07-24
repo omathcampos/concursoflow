@@ -45,7 +45,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 0 — Repositório, Git Flow e CI
 - [x] Fase 1 — Setup Next.js + design system
 - [x] Fase 2 — Matérias e ciclo de estudos
-- [ ] Fase 3 — Calendário com drag & drop
+- [x] Fase 3 — Calendário com drag & drop
 - [ ] Fase 4 — Sessões + cronômetro
 - [ ] Fase 5 — Revisões espaçadas
 - [ ] Fase 6 — Dashboard

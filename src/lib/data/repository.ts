@@ -1,4 +1,4 @@
-import type { Annotation, Cycle, CycleEntry, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, Subject, Topic } from "@/lib/data/types";
 
 export interface CrudRepo<T, Managed extends keyof T> {
   list(): T[];
@@ -21,9 +21,19 @@ export interface CycleRepo {
   startNewRound(cycleId: string): Cycle;
 }
 
+export type DeleteScope = "this" | "future";
+
+export interface BlockRepo extends CrudRepo<Block, "id" | "createdAt"> {
+  /** Cria uma série de blocos semanais (mesma matéria/horário, uma ocorrência por semana). */
+  createSeries(input: Omit<Block, "id" | "createdAt" | "recurrenceRule">, weeksCount: number): Block[];
+  /** Remove só esta ocorrência, ou esta e todas as futuras da mesma série. */
+  removeSeries(id: string, scope: DeleteScope): void;
+}
+
 export interface Repository {
   subjects: CrudRepo<Subject, "id" | "createdAt">;
   topics: CrudRepo<Topic, "id" | "createdAt">;
   annotations: CrudRepo<Annotation, "id" | "createdAt" | "updatedAt">;
   cycle: CycleRepo;
+  blocks: BlockRepo;
 }
