@@ -33,6 +33,7 @@ Registrar sessões de estudo (manual ou via cronômetro), com métricas de quest
 - [ ] Concluir bloco do calendário gera sessão vinculada e o bloco mostra ✓.
 - [ ] Excluir sessão subtrai o tempo do ciclo.
 - [ ] Filtros da lista funcionam combinados.
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 
 ## Não fazer
 - Lógica de revisões (fase 5). Gráficos (fase 6).

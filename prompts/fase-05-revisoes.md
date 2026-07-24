@@ -30,6 +30,7 @@ Sistema de revisões espaçadas automático com painel diário e presença no ca
 - [ ] "Revisado ✓" com registro cria sessão tipo `revisao` que soma no ciclo.
 - [ ] Chips de revisão aparecem no dia certo do calendário.
 - [ ] Pular não agenda próxima; undo do toast restaura.
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 
 ## Não fazer
 - Algoritmos adaptativos (Anki/SM-2) — steps fixos por enquanto. Gráficos (fase 6).

@@ -24,7 +24,7 @@ feature/fase-XX-nome ──PR──▶ develop ──release/vX.Y.Z──PR─�
    - `develop`: mesmas regras.
    - Obs.: em repo privado no plano free, branch protection via API pode ser limitada — se a API recusar, usar **rulesets** (`gh api repos/{owner}/{repo}/rulesets` ou dashboard) e registrar no CONTRIBUTING.md o que foi aplicado.
 5. **CI mínimo** (`.github/workflows/ci.yml`): em PRs para `develop` e `master` → checkout, setup Node 20 com cache, `npm ci`, `npm run lint`, `npx tsc --noEmit`, `npm run test` (Vitest), `npm run build` e `npm run e2e` (Playwright, com `npx playwright install --with-deps chromium`). Steps de teste devem ser tolerantes à ausência dos scripts até a fase 1 configurá-los. Enquanto o projeto Next não existe (fase 1), o workflow deve detectar ausência de `package.json` e passar com aviso (para não travar este PR inicial).
-6. **Templates**: `.github/pull_request_template.md` (O que foi feito / Fase relacionada / Checklist: critérios de aceite da fase, sem erros de tsc, testado localmente) e `CONTRIBUTING.md` com o fluxo acima.
+6. **Templates**: `.github/pull_request_template.md` (O que foi feito / Fase relacionada / Checklist: critérios de aceite da fase, `npm run lint` limpo, tsc sem erros, testes unit e e2e verdes, testado localmente) e `CONTRIBUTING.md` com o fluxo acima.
 7. **Labels**: criar labels `fase-1`...`fase-9`, `bug`, `melhoria` (`gh label create`).
 8. **Teste do fluxo**: criar branch `feature/fase-00-github` com estes arquivos de config, abrir PR para `develop` (`gh pr create`), verificar que o CI roda e que push direto em `develop` é rejeitado, e fazer merge pelo PR.
 
