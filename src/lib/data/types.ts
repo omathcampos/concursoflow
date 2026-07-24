@@ -16,6 +16,7 @@ export interface Subject {
   name: string;
   color: string;
   weight: number; // 1-5
+  notes: string | null;
   createdAt: string;
 }
 
@@ -25,6 +26,7 @@ export interface Topic {
   name: string;
   status: TopicStatus;
   position: number;
+  notes: string | null;
   createdAt: string;
 }
 
@@ -84,6 +86,16 @@ export interface Review {
   status: ReviewStatus;
   completedAt: string | null;
   createdAt: string;
+}
+
+export interface Annotation {
+  id: string;
+  subjectId: string | null;
+  topicId: string | null;
+  title: string;
+  content: string; // markdown
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Profile {

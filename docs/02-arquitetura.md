@@ -47,6 +47,7 @@ src/
 │   ├── materias/page.tsx
 │   ├── sessoes/page.tsx
 │   ├── revisoes/page.tsx
+│   ├── anotacoes/page.tsx
 │   └── (auth)/                 # fase 8: login, cadastro
 ├── components/
 │   ├── ui/                     # shadcn
@@ -68,8 +69,9 @@ src/
 
 ## Modelos de dados (resumo — schema completo em 03-schema.sql)
 
-- **subjects**: id, name, color, weight(1–5)
-- **topics**: id, subject_id, name, status
+- **subjects**: id, name, color, weight(1–5), notes
+- **topics**: id, subject_id, name, status, notes
+- **annotations**: id, subject_id?, topic_id?, title, content(markdown), updated_at
 - **cycles**: id, name, is_active / **cycle_entries**: cycle_id, subject_id, target_minutes, done_minutes(derivado)
 - **blocks** (calendário): id, subject_id, topic_id?, start_at, end_at, type, status, recurrence?
 - **sessions**: id, subject_id, topic_id?, block_id?, type, started_at, duration_min, questions_total?, questions_correct?, pages_read?, notes

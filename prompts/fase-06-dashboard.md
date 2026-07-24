@@ -29,6 +29,7 @@ Transformar a home (/) em um dashboard completo e bonito com Recharts.
 - [ ] Seletor de período altera o gráfico de horas por matéria.
 - [ ] % por matéria bate com as sessões de questões registradas.
 - [ ] Dashboard responsivo (gráficos empilham no mobile) e sem dados não quebra nada.
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 
 ## Não fazer
 - Supabase (próxima fase).

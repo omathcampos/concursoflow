@@ -30,6 +30,7 @@ Cadastro, login e isolamento de dados por usuário via Supabase Auth.
 - [ ] Recuperação de senha por email funciona.
 - [ ] Countdown da prova lê do profile.
 - [ ] Advisors do Supabase sem alertas críticos.
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 
 ## Não fazer
 - Planos pagos, roles/admin, exclusão de conta (pode ficar para depois).

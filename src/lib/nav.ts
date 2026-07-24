@@ -5,6 +5,7 @@ import {
   type LucideIcon,
   RefreshCw,
   Repeat2,
+  StickyNote,
   Timer,
 } from "lucide-react";
 
@@ -21,4 +22,5 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/materias", label: "Matérias", icon: BookOpen },
   { href: "/sessoes", label: "Sessões", icon: Timer },
   { href: "/revisoes", label: "Revisões", icon: Repeat2 },
+  { href: "/anotacoes", label: "Anotações", icon: StickyNote },
 ];

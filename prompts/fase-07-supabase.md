@@ -25,7 +25,7 @@ Criar o projeto Supabase, aplicar o schema e implementar `SupabaseRepository` co
 3. **Cliente**: instalar `@supabase/supabase-js @supabase/ssr`; criar `lib/data/supabase/client.ts` (browser) e `server.ts`.
 4. **SupabaseRepository** (`lib/data/supabase/repository.ts`): implementar TODA a interface `Repository`. Mapear snake_case ↔ camelCase num só lugar (`mappers.ts`). Gerar types com `supabase gen types typescript` (ou tool MCP) para tipar as queries.
 5. **Troca de implementação**: provider decide por env `NEXT_PUBLIC_DATA_SOURCE=local|supabase`. Default `supabase`; `local` continua funcionando como fallback/offline.
-6. **Migração de dados**: página/dialog "Importar meus dados locais" — lê o localStorage e insere tudo no Supabase (na ordem: subjects → topics → cycles → cycle_entries → blocks → sessions → reviews, remapeando ids). Idempotente (avisar se já há dados no servidor).
+6. **Migração de dados**: página/dialog "Importar meus dados locais" — lê o localStorage e insere tudo no Supabase (na ordem: subjects → topics → cycles → cycle_entries → blocks → sessions → reviews → annotations, remapeando ids). Idempotente (avisar se já há dados no servidor).
 7. **UX de rede**: estados de loading (skeletons) nas listas/calendário e toasts de erro nas mutações (o Repository agora é async de verdade — a interface já devia ser async desde a fase 2; se não for, ajustar agora).
 
 ## Testes (TDD)
@@ -38,6 +38,7 @@ Criar o projeto Supabase, aplicar o schema e implementar `SupabaseRepository` co
 - [ ] Importação traz os dados locais preservando vínculos (sessão → bloco, review → sessão).
 - [ ] Refresh e outra máquina/navegador veem os mesmos dados.
 - [ ] Nenhuma credencial commitada; `get_advisors` do Supabase sem alertas críticos de segurança.
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 - [ ] Confirmado que NENHUMA operação tocou os projetos `bjglagkkodzlzlbnpwgp`, `pzxwxrxocksfknvqcmnu` ou `yvjjatlindmruqmlmqpg` — todas as operações usaram a ref do projeto novo.
 
 ## Não fazer

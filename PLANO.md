@@ -33,7 +33,8 @@ cronograma/
     ├── fase-06-dashboard.md     → dashboard com estatísticas
     ├── fase-07-supabase.md      → migração localStorage → Supabase
     ├── fase-08-auth.md          → cadastro/login de usuários (por último!)
-    └── fase-09-polimento.md     → polimento, responsividade e deploy
+    ├── fase-09-polimento.md     → polimento, responsividade e deploy
+    └── fase-10-notificacoes.md  → email + Telegram: lembrete diário, relatório semanal, alertas
 ```
 
 ## Como usar
@@ -50,4 +51,4 @@ Cada fase termina com o app **funcionando de ponta a ponta**. Nunca deixe a apli
 
 ## Testes
 
-**TDD sempre**: nas regras de domínio, testes Vitest são escritos ANTES da implementação (red → green → refactor). **E2E ao final de cada feature**: cada fase entrega sua spec Playwright em `e2e/`, e as specs das fases anteriores devem continuar verdes (regressão). PR só abre com `npm run test` e `npm run e2e` passando. Detalhes em `docs/02-arquitetura.md` → "Estratégia de testes".
+**TDD sempre**: nas regras de domínio, testes Vitest são escritos ANTES da implementação (red → green → refactor). **E2E ao final de cada feature**: cada fase entrega sua spec Playwright em `e2e/`, e as specs das fases anteriores devem continuar verdes (regressão). PR só abre com `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` passando — **rodar lint sempre, ao final de cada fase, antes de commitar**. Detalhes em `docs/02-arquitetura.md` → "Estratégia de testes".

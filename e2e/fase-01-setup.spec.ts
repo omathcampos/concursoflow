@@ -7,6 +7,7 @@ const PAGES = [
   { href: "/materias", heading: "Matérias" },
   { href: "/sessoes", heading: "Sessões" },
   { href: "/revisoes", heading: "Revisões" },
+  { href: "/anotacoes", heading: "Anotações" },
 ];
 
 test("app carrega e mostra o dashboard", async ({ page }) => {
@@ -15,7 +16,7 @@ test("app carrega e mostra o dashboard", async ({ page }) => {
   await expect(page.getByRole("link", { name: "ConcursoFlow" }).first()).toBeVisible();
 });
 
-test("navega pelas 6 páginas pela sidebar", async ({ page }) => {
+test("navega pelas 7 páginas pela sidebar", async ({ page }) => {
   await page.goto("/");
 
   for (const { href, heading } of PAGES) {
