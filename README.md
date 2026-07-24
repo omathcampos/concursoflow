@@ -41,7 +41,7 @@ NEXT_PUBLIC_DATA_SOURCE=supabase   # ou "local" para rodar offline com localStor
 
 O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompts/`:
 
-- [ ] Fase 0 — Repositório, Git Flow e CI
+- [x] Fase 0 — Repositório, Git Flow e CI
 - [ ] Fase 1 — Setup Next.js + design system
 - [ ] Fase 2 — Matérias e ciclo de estudos
 - [ ] Fase 3 — Calendário com drag & drop
