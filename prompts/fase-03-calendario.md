@@ -18,7 +18,7 @@ Calendário semanal (principal) e mensal com blocos de estudo remanejáveis por 
    - **Mover**: drag do bloco para outro dia/horário (snap de 30min). Usar @dnd-kit com overlay.
    - **Redimensionar**: alça na borda inferior do bloco (snap 30min, mínimo 30min).
    - **Sobreposição**: usar `detectOverlap` em `lib/domain/blocks.ts`; ao soltar sobre conflito, rejeitar com toast.
-   - **Clicar no bloco**: popover com detalhes + ações: editar, excluir, marcar concluído ✓ ou pulado, e "criar anotação" (abre o editor de Anotações já vinculado à matéria/tópico do bloco). Concluído fica com opacidade/check; pulado fica hachurado.
+   - **Clicar no bloco**: popover com detalhes + ações: editar, excluir, marcar concluído ✓ ou pulado. Concluído fica com opacidade/check; pulado fica hachurado.
    - Blocos recorrentes: gerar ocorrências das próximas 8 semanas ao criar; editar/excluir pergunta "só esta" ou "todas as futuras".
 4. **Vista mensal**: grid do mês com dots coloridos por matéria em cada dia + contagem de horas planejadas; clique no dia → navega para a semana.
 5. **Mobile** (< 768px): vista semanal vira agenda vertical de um dia (lista de blocos) com swipe/setas entre dias. Drag & drop desabilitado no mobile; editar via dialog.
