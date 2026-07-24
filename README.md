@@ -47,12 +47,13 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 2 — Matérias e ciclo de estudos
 - [x] Fase 3 — Calendário com drag & drop
 - [x] Fase 4 — Sessões + cronômetro
-- [ ] Fase 5 — Revisões espaçadas
+- [x] Fase 5 — Revisões espaçadas
 - [ ] Fase 6 — Dashboard
 - [ ] Fase 7 — Supabase
 - [ ] Fase 8 — Autenticação
 - [ ] Fase 9 — Polimento + deploy (v1.0.0)
 - [ ] Fase 10 — Notificações email + Telegram (v1.1.0): lembrete diário, relatório semanal, alerta de revisões atrasadas
+- [ ] Fase 11 — Melhorias: anotações, observações e modo foco do cronômetro (anotações e observações já entregues na Fase 2 — escopo restante: modo foco em tela cheia com Wake Lock)
 
 **Backlog futuro:** anexar arquivos (PDFs, resumos, imagens) a matérias/tópicos/sessões via Supabase Storage.
 

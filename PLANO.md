@@ -34,7 +34,9 @@ cronograma/
     ├── fase-07-supabase.md      → migração localStorage → Supabase
     ├── fase-08-auth.md          → cadastro/login de usuários (por último!)
     ├── fase-09-polimento.md     → polimento, responsividade e deploy
-    └── fase-10-notificacoes.md  → email + Telegram: lembrete diário, relatório semanal, alertas
+    ├── fase-10-notificacoes.md  → email + Telegram: lembrete diário, relatório semanal, alertas
+    ├── fase-11-melhorias.md     → anotações markdown, observações, modo foco do cronômetro
+    └── extra-claude-md.md       → gerar CLAUDE.md (executar antes da fase 7)
 ```
 
 ## Como usar

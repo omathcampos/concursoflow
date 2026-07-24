@@ -22,4 +22,4 @@ Deixar o app com acabamento profissional e publicado na Vercel.
 - [ ] App publicado na Vercel; cadastro, login e todas as features funcionam em produção.
 - [ ] Auth redirects de produção configurados no Supabase.
 - [ ] Navegável 100% por teclado nas telas principais.
-- [ ] Mobile confortável nas 7 páginas.
+- [ ] Mobile confortável nas 6 páginas.
