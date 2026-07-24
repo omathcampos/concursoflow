@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { useLocalStore } from "@/lib/data/local/store";
 import { createLocalRepository } from "@/lib/data/local/local-repository";
+import type { Session } from "@/lib/data/types";
 
 function repo() {
   return createLocalRepository(useLocalStore.getState());
@@ -78,33 +79,122 @@ describe("LocalRepository — annotations", () => {
   });
 });
 
-describe("LocalRepository — cycle", () => {
-  it("configura o ciclo, adiciona progresso e detecta rodada completa", () => {
+function makeSession(overrides: Partial<Omit<Session, "id" | "createdAt">> & { subjectId: string }) {
+  return repo().sessions.create({
+    topicId: null,
+    blockId: null,
+    cycleId: null,
+    cycleRound: null,
+    type: "teoria",
+    startedAt: "2026-03-02T19:00:00.000Z",
+    durationMin: 30,
+    questionsTotal: null,
+    questionsCorrect: null,
+    pagesRead: null,
+    notes: null,
+    scheduleReview: false,
+    ...overrides,
+  });
+}
+
+describe("LocalRepository — cycle (progresso derivado de sessões)", () => {
+  it("progresso começa em zero ao configurar o ciclo", () => {
+    const a = repo().subjects.create({ name: "A", color: "#8b5cf6", weight: 3, notes: null });
+    const cycle = repo().cycle.setup("Ciclo principal", [{ subjectId: a.id, targetMinutes: 60 }]);
+    expect(repo().cycle.entries(cycle.id)[0].doneMinutes).toBe(0);
+  });
+
+  it("sessão vinculada ao ciclo/rodada soma no progresso da matéria", () => {
     const a = repo().subjects.create({ name: "A", color: "#8b5cf6", weight: 3, notes: null });
     const b = repo().subjects.create({ name: "B", color: "#3b82f6", weight: 1, notes: null });
-
-    const cycle = repo().cycle.setup("Ciclo principal", [
+    const cycle = repo().cycle.setup("Ciclo", [
       { subjectId: a.id, targetMinutes: 60 },
       { subjectId: b.id, targetMinutes: 30 },
     ]);
-    expect(cycle.round).toBe(1);
-    expect(repo().cycle.entries(cycle.id)).toHaveLength(2);
 
-    repo().cycle.addProgress(cycle.id, a.id, 60);
-    repo().cycle.addProgress(cycle.id, b.id, 30);
+    makeSession({ subjectId: a.id, cycleId: cycle.id, cycleRound: cycle.round, durationMin: 60 });
+    makeSession({ subjectId: b.id, cycleId: cycle.id, cycleRound: cycle.round, durationMin: 30 });
 
     const entries = repo().cycle.entries(cycle.id);
     expect(entries.every((e) => e.doneMinutes >= e.targetMinutes)).toBe(true);
   });
 
-  it("nova rodada zera o progresso e incrementa o número da rodada", () => {
+  it("editar a duração da sessão atualiza o progresso; excluir a sessão zera de novo", () => {
     const a = repo().subjects.create({ name: "A", color: "#8b5cf6", weight: 3, notes: null });
     const cycle = repo().cycle.setup("Ciclo", [{ subjectId: a.id, targetMinutes: 60 }]);
-    repo().cycle.addProgress(cycle.id, a.id, 60);
+
+    const session = makeSession({ subjectId: a.id, cycleId: cycle.id, cycleRound: cycle.round, durationMin: 30 });
+    expect(repo().cycle.entries(cycle.id)[0].doneMinutes).toBe(30);
+
+    repo().sessions.update(session.id, { durationMin: 50 });
+    expect(repo().cycle.entries(cycle.id)[0].doneMinutes).toBe(50);
+
+    repo().sessions.remove(session.id);
+    expect(repo().cycle.entries(cycle.id)[0].doneMinutes).toBe(0);
+  });
+
+  it("sessões sem cycleId/cycleRound (ex.: registro avulso) não contam no progresso do ciclo", () => {
+    const a = repo().subjects.create({ name: "A", color: "#8b5cf6", weight: 3, notes: null });
+    const cycle = repo().cycle.setup("Ciclo", [{ subjectId: a.id, targetMinutes: 60 }]);
+
+    makeSession({ subjectId: a.id, durationMin: 45 });
+
+    expect(repo().cycle.entries(cycle.id)[0].doneMinutes).toBe(0);
+  });
+
+  it("nova rodada incrementa o número da rodada e zera o progresso (sessões da rodada anterior não contam mais)", () => {
+    const a = repo().subjects.create({ name: "A", color: "#8b5cf6", weight: 3, notes: null });
+    const cycle = repo().cycle.setup("Ciclo", [{ subjectId: a.id, targetMinutes: 60 }]);
+    makeSession({ subjectId: a.id, cycleId: cycle.id, cycleRound: cycle.round, durationMin: 60 });
 
     const restarted = repo().cycle.startNewRound(cycle.id);
     expect(restarted.round).toBe(2);
-    expect(repo().cycle.entries(cycle.id).every((e) => e.doneMinutes === 0)).toBe(true);
+    expect(repo().cycle.entries(cycle.id)[0].doneMinutes).toBe(0);
+  });
+});
+
+describe("LocalRepository — sessions", () => {
+  it("cria, atualiza e remove uma sessão", () => {
+    const subject = repo().subjects.create({ name: "Português", color: "#8b5cf6", weight: 3, notes: null });
+    const session = makeSession({ subjectId: subject.id, questionsTotal: 20, questionsCorrect: 15 });
+
+    expect(repo().sessions.list()).toHaveLength(1);
+
+    const updated = repo().sessions.update(session.id, { questionsCorrect: 18 });
+    expect(updated.questionsCorrect).toBe(18);
+
+    repo().sessions.remove(session.id);
+    expect(repo().sessions.list()).toHaveLength(0);
+  });
+
+  it("remover matéria remove suas sessões; remover tópico apenas desvincula (set null)", () => {
+    const subject = repo().subjects.create({ name: "Português", color: "#8b5cf6", weight: 3, notes: null });
+    const topic = repo().topics.create({ subjectId: subject.id, name: "Crase", status: "not_started", position: 0, notes: null });
+    const session = makeSession({ subjectId: subject.id, topicId: topic.id });
+
+    repo().topics.remove(topic.id);
+    expect(repo().sessions.get(session.id)?.topicId).toBeNull();
+
+    repo().subjects.remove(subject.id);
+    expect(repo().sessions.list()).toHaveLength(0);
+  });
+
+  it("remover um bloco desvincula (set null) as sessões ligadas a ele", () => {
+    const subject = repo().subjects.create({ name: "Português", color: "#8b5cf6", weight: 3, notes: null });
+    const block = repo().blocks.create({
+      subjectId: subject.id,
+      topicId: null,
+      type: "teoria",
+      status: "done",
+      startAt: "2026-03-02T19:00:00.000Z",
+      endAt: "2026-03-02T20:00:00.000Z",
+      recurrenceRule: null,
+      notes: null,
+    });
+    const session = makeSession({ subjectId: subject.id, blockId: block.id });
+
+    repo().blocks.remove(block.id);
+    expect(repo().sessions.get(session.id)?.blockId).toBeNull();
   });
 });
 

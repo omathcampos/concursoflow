@@ -13,6 +13,7 @@ import { BlockFormDialog } from "@/components/calendar/block-form-dialog";
 import { MobileAgenda } from "@/components/calendar/mobile-agenda";
 import { MonthGrid } from "@/components/calendar/month-grid";
 import { WeekGrid } from "@/components/calendar/week-grid";
+import { SessionFormDialog } from "@/components/sessions/session-form-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { startOfWeek } from "@/lib/calendar";
@@ -20,6 +21,7 @@ import type { DeleteScope } from "@/lib/data/repository";
 import type { Block } from "@/lib/data/types";
 import { useRepo } from "@/lib/data/use-repo";
 import { detectOverlap } from "@/lib/domain/blocks";
+import type { SessionFormData } from "@/lib/domain/session-validation";
 
 const RECURRING_WEEKS = 8;
 
@@ -38,16 +40,19 @@ export default function CalendarioPage() {
   const [createDialog, setCreateDialog] = useState<{ date: Date } | null>(null);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [detailsBlockId, setDetailsBlockId] = useState<string | null>(null);
+  const [completingBlockId, setCompletingBlockId] = useState<string | null>(null);
 
   const subjects = repo.subjects.list();
   const topics = repo.topics.list();
   const blocks = repo.blocks.list();
+  const sessions = repo.sessions.list();
   const subjectsById = new Map(subjects.map((s) => [s.id, s]));
 
   // Deriva sempre dos dados vivos do repo — nunca guarda cópia do bloco em
   // estado, senão marcar status/editar não refletiria no dialog aberto.
   const editingBlock = editingBlockId ? (blocks.find((b) => b.id === editingBlockId) ?? null) : null;
   const detailsBlock = detailsBlockId ? (blocks.find((b) => b.id === detailsBlockId) ?? null) : null;
+  const completingBlock = completingBlockId ? (blocks.find((b) => b.id === completingBlockId) ?? null) : null;
 
   function shift(amount: number) {
     if (view === "week") setAnchorDate((d) => addDays(d, amount * 7));
@@ -122,6 +127,21 @@ export default function CalendarioPage() {
 
   function goToAnnotation(block: Block) {
     router.push(`/anotacoes?novaPara=${block.subjectId}`);
+  }
+
+  function submitCompleteSession(data: SessionFormData) {
+    if (!completingBlock) return;
+    const cycle = repo.cycle.getActive();
+    const inCycle = cycle && repo.cycle.entries(cycle.id).some((e) => e.subjectId === data.subjectId);
+    repo.sessions.create({
+      ...data,
+      blockId: completingBlock.id,
+      cycleId: inCycle ? cycle!.id : null,
+      cycleRound: inCycle ? cycle!.round : null,
+    });
+    repo.blocks.update(completingBlock.id, { status: "done" });
+    setCompletingBlockId(null);
+    setDetailsBlockId(null);
   }
 
   const weekStart = startOfWeek(anchorDate);
@@ -234,13 +254,35 @@ export default function CalendarioPage() {
           block={detailsBlock}
           subject={detailsSubject}
           topic={detailsTopic}
+          hasLinkedSession={sessions.some((s) => s.blockId === detailsBlock.id)}
           onEdit={() => {
             setEditingBlockId(detailsBlock.id);
             setDetailsBlockId(null);
           }}
           onMarkStatus={(status) => repo.blocks.update(detailsBlock.id, { status })}
+          onCompleteWithSession={() => setCompletingBlockId(detailsBlock.id)}
           onDelete={(scope) => deleteBlock(detailsBlock, scope)}
           onNewAnnotation={() => goToAnnotation(detailsBlock)}
+        />
+      ) : null}
+
+      {completingBlock ? (
+        <SessionFormDialog
+          open
+          onOpenChange={(open) => !open && setCompletingBlockId(null)}
+          subjects={subjects}
+          topics={topics}
+          title="Concluir bloco — registrar sessão"
+          initial={{
+            subjectId: completingBlock.subjectId,
+            topicId: completingBlock.topicId,
+            type: completingBlock.type,
+            startedAt: completingBlock.startAt,
+            durationMin: Math.round(
+              (new Date(completingBlock.endAt).getTime() - new Date(completingBlock.startAt).getTime()) / 60_000,
+            ),
+          }}
+          onSubmit={submitCompleteSession}
         />
       ) : null}
     </div>

@@ -2,8 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { generateWeeklyOccurrences } from "@/lib/domain/blocks";
+import { IDLE_TIMER, pauseTimer, resumeTimer, startTimer, stopTimer, type TimerState } from "@/lib/domain/timer";
 import type { CycleSetupEntry, DeleteScope } from "@/lib/data/repository";
-import type { Annotation, Block, Cycle, CycleEntry, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, Session, Subject, Topic } from "@/lib/data/types";
 
 function uid(): string {
   return crypto.randomUUID();
@@ -20,6 +21,8 @@ export interface LocalState {
   cycles: Cycle[];
   cycleEntries: CycleEntry[];
   blocks: Block[];
+  sessions: Session[];
+  timer: TimerState;
 
   createSubject: (input: Omit<Subject, "id" | "createdAt">) => Subject;
   updateSubject: (id: string, patch: Partial<Omit<Subject, "id" | "createdAt">>) => Subject;
@@ -34,7 +37,6 @@ export interface LocalState {
   removeAnnotation: (id: string) => void;
 
   setupCycle: (name: string, entries: CycleSetupEntry[]) => Cycle;
-  addCycleProgress: (cycleId: string, subjectId: string, minutes: number) => void;
   startNewRound: (cycleId: string) => Cycle;
 
   createBlock: (input: Omit<Block, "id" | "createdAt">) => Block;
@@ -42,6 +44,15 @@ export interface LocalState {
   removeBlock: (id: string) => void;
   createBlockSeries: (input: Omit<Block, "id" | "createdAt" | "recurrenceRule">, weeksCount: number) => Block[];
   removeBlockSeries: (id: string, scope: DeleteScope) => void;
+
+  createSession: (input: Omit<Session, "id" | "createdAt">) => Session;
+  updateSession: (id: string, patch: Partial<Omit<Session, "id" | "createdAt">>) => Session;
+  removeSession: (id: string) => void;
+
+  startTimerFor: (subjectId: string) => void;
+  pauseTimerNow: () => void;
+  resumeTimerNow: () => void;
+  stopTimerNow: () => { durationMin: number; startedAt: string | null; subjectId: string | null };
 
   loadSeed: () => void;
 }
@@ -55,6 +66,8 @@ export const useLocalStore = create<LocalState>()(
       cycles: [],
       cycleEntries: [],
       blocks: [],
+      sessions: [],
+      timer: IDLE_TIMER,
 
       createSubject: (input) => {
         const subject: Subject = { id: uid(), createdAt: now(), ...input };
@@ -79,6 +92,7 @@ export const useLocalStore = create<LocalState>()(
           topics: state.topics.filter((topic) => topic.subjectId !== id),
           cycleEntries: state.cycleEntries.filter((entry) => entry.subjectId !== id),
           blocks: state.blocks.filter((block) => block.subjectId !== id),
+          sessions: state.sessions.filter((session) => session.subjectId !== id),
           annotations: state.annotations.map((annotation) =>
             annotation.subjectId === id ? { ...annotation, subjectId: null } : annotation,
           ),
@@ -107,6 +121,9 @@ export const useLocalStore = create<LocalState>()(
           topics: state.topics.filter((topic) => topic.id !== id),
           annotations: state.annotations.map((annotation) =>
             annotation.topicId === id ? { ...annotation, topicId: null } : annotation,
+          ),
+          sessions: state.sessions.map((session) =>
+            session.topicId === id ? { ...session, topicId: null } : session,
           ),
         }));
       },
@@ -162,15 +179,6 @@ export const useLocalStore = create<LocalState>()(
 
         return cycle;
       },
-      addCycleProgress: (cycleId, subjectId, minutes) => {
-        set((state) => ({
-          cycleEntries: state.cycleEntries.map((entry) =>
-            entry.cycleId === cycleId && entry.subjectId === subjectId
-              ? { ...entry, doneMinutes: entry.doneMinutes + minutes }
-              : entry,
-          ),
-        }));
-      },
       startNewRound: (cycleId) => {
         let updated: Cycle | undefined;
         set((state) => ({
@@ -179,9 +187,6 @@ export const useLocalStore = create<LocalState>()(
             updated = { ...cycle, round: cycle.round + 1 };
             return updated;
           }),
-          cycleEntries: state.cycleEntries.map((entry) =>
-            entry.cycleId === cycleId ? { ...entry, doneMinutes: 0 } : entry,
-          ),
         }));
         if (!updated) throw new Error(`Cycle ${cycleId} não encontrado`);
         return updated;
@@ -205,7 +210,12 @@ export const useLocalStore = create<LocalState>()(
         return updated;
       },
       removeBlock: (id) => {
-        set((state) => ({ blocks: state.blocks.filter((block) => block.id !== id) }));
+        set((state) => ({
+          blocks: state.blocks.filter((block) => block.id !== id),
+          sessions: state.sessions.map((session) =>
+            session.blockId === id ? { ...session, blockId: null } : session,
+          ),
+        }));
       },
       createBlockSeries: (input, weeksCount) => {
         const recurrenceRule = `WEEKLY:${uid()}`;
@@ -225,18 +235,55 @@ export const useLocalStore = create<LocalState>()(
         const target = get().blocks.find((block) => block.id === id);
         if (!target) return;
 
-        if (scope === "this" || !target.recurrenceRule) {
-          set((state) => ({ blocks: state.blocks.filter((block) => block.id !== id) }));
-          return;
-        }
+        const idsToRemove =
+          scope === "this" || !target.recurrenceRule
+            ? [id]
+            : get()
+                .blocks.filter(
+                  (block) =>
+                    block.recurrenceRule === target.recurrenceRule &&
+                    new Date(block.startAt).getTime() >= new Date(target.startAt).getTime(),
+                )
+                .map((block) => block.id);
 
-        const targetStart = new Date(target.startAt).getTime();
         set((state) => ({
-          blocks: state.blocks.filter(
-            (block) =>
-              !(block.recurrenceRule === target.recurrenceRule && new Date(block.startAt).getTime() >= targetStart),
+          blocks: state.blocks.filter((block) => !idsToRemove.includes(block.id)),
+          sessions: state.sessions.map((session) =>
+            session.blockId && idsToRemove.includes(session.blockId) ? { ...session, blockId: null } : session,
           ),
         }));
+      },
+
+      createSession: (input) => {
+        const session: Session = { id: uid(), createdAt: now(), ...input };
+        set((state) => ({ sessions: [...state.sessions, session] }));
+        return session;
+      },
+      updateSession: (id, patch) => {
+        let updated: Session | undefined;
+        set((state) => ({
+          sessions: state.sessions.map((session) => {
+            if (session.id !== id) return session;
+            updated = { ...session, ...patch };
+            return updated;
+          }),
+        }));
+        if (!updated) throw new Error(`Session ${id} não encontrada`);
+        return updated;
+      },
+      removeSession: (id) => {
+        set((state) => ({ sessions: state.sessions.filter((session) => session.id !== id) }));
+      },
+
+      startTimerFor: (subjectId) => set({ timer: startTimer(subjectId) }),
+      pauseTimerNow: () => set((state) => ({ timer: pauseTimer(state.timer) })),
+      resumeTimerNow: () => set((state) => ({ timer: resumeTimer(state.timer) })),
+      stopTimerNow: () => {
+        const timer = get().timer;
+        const { durationMin, startedAt } = stopTimer(timer);
+        const subjectId = timer.subjectId;
+        set({ timer: IDLE_TIMER });
+        return { durationMin, startedAt, subjectId };
       },
 
       loadSeed: () => {

@@ -1,4 +1,16 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+/** Registra uma sessão manual para simular progresso no ciclo (via página Sessões). */
+async function logSession(page: Page, subjectName: string, minutes: number) {
+  await page.goto("/sessoes");
+  await page.getByRole("button", { name: "Nova sessão" }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova sessão" });
+  await dialog.getByRole("combobox").first().click();
+  await page.getByRole("option", { name: subjectName, exact: true }).click();
+  await dialog.locator("#session-duration").fill(String(minutes));
+  await dialog.getByRole("button", { name: "Salvar" }).click();
+  await expect(dialog).not.toBeVisible();
+}
 
 test("cria matéria com cor, peso e observações, adiciona tópicos e alterna status", async ({ page }) => {
   await page.goto("/materias");
@@ -51,11 +63,13 @@ test("monta o ciclo, sugere a matéria certa, conclui a rodada e inicia uma nova
   await expect(main.getByText("Estude agora")).toBeVisible();
   await expect(main.getByText("Alfa", { exact: true }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "30min" }).first().click();
+  await logSession(page, "Alfa", 30);
+  await page.goto("/ciclo");
   // Alfa concluiu a meta — Beta passa a ser a sugestão.
   await expect(main.getByText("Beta", { exact: true }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "30min" }).last().click();
+  await logSession(page, "Beta", 30);
+  await page.goto("/ciclo");
   await expect(page.getByText(/Rodada 1 concluída/)).toBeVisible();
 
   await page.getByRole("button", { name: "Nova rodada" }).click();

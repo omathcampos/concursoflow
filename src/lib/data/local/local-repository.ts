@@ -21,9 +21,23 @@ function makeCrudRepo<T extends { id: string }, Managed extends keyof T>(
 export function createLocalRepository(state: LocalState): Repository {
   const cycle: CycleRepo = {
     getActive: () => state.cycles.find((c) => c.isActive),
-    entries: (cycleId) => state.cycleEntries.filter((entry) => entry.cycleId === cycleId),
+    entries: (cycleId) => {
+      const activeCycle = state.cycles.find((c) => c.id === cycleId);
+      return state.cycleEntries
+        .filter((entry) => entry.cycleId === cycleId)
+        .map((entry) => ({
+          ...entry,
+          doneMinutes: state.sessions
+            .filter(
+              (session) =>
+                session.cycleId === cycleId &&
+                session.cycleRound === activeCycle?.round &&
+                session.subjectId === entry.subjectId,
+            )
+            .reduce((sum, session) => sum + session.durationMin, 0),
+        }));
+    },
     setup: state.setupCycle,
-    addProgress: state.addCycleProgress,
     startNewRound: state.startNewRound,
   };
 
@@ -53,5 +67,10 @@ export function createLocalRepository(state: LocalState): Repository {
       createSeries: state.createBlockSeries,
       removeSeries: state.removeBlockSeries,
     } satisfies BlockRepo,
+    sessions: makeCrudRepo(() => state.sessions, {
+      create: state.createSession,
+      update: state.updateSession,
+      remove: state.removeSession,
+    }),
   };
 }

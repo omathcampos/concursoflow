@@ -1,4 +1,4 @@
-import type { Annotation, Block, Cycle, CycleEntry, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, Session, Subject, Topic } from "@/lib/data/types";
 
 export interface CrudRepo<T, Managed extends keyof T> {
   list(): T[];
@@ -15,9 +15,9 @@ export interface CycleSetupEntry {
 
 export interface CycleRepo {
   getActive(): Cycle | undefined;
+  /** doneMinutes é derivado das sessões da rodada atual — nunca armazenado diretamente. */
   entries(cycleId: string): CycleEntry[];
   setup(name: string, entries: CycleSetupEntry[]): Cycle;
-  addProgress(cycleId: string, subjectId: string, minutes: number): void;
   startNewRound(cycleId: string): Cycle;
 }
 
@@ -36,4 +36,5 @@ export interface Repository {
   annotations: CrudRepo<Annotation, "id" | "createdAt" | "updatedAt">;
   cycle: CycleRepo;
   blocks: BlockRepo;
+  sessions: CrudRepo<Session, "id" | "createdAt">;
 }
