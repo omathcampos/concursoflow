@@ -91,7 +91,6 @@ create table public.sessions (
   questions_correct int check (questions_correct >= 0),
   pages_read int check (pages_read >= 0),
   notes text,
-  schedule_review boolean not null default false,  -- intenção de agendar revisão espaçada (fase 5)
   created_at timestamptz default now(),
   check (questions_correct is null or questions_total is null or questions_correct <= questions_total)
 );
