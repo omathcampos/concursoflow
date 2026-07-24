@@ -111,12 +111,7 @@ export default function CicloPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {entriesWithSubject.map(({ entry, subject }) => (
-                <SubjectProgressRow
-                  key={entry.id}
-                  subject={subject}
-                  entry={entry}
-                  onAddProgress={() => repo.cycle.addProgress(cycle.id, subject.id, 30)}
-                />
+                <SubjectProgressRow key={entry.id} subject={subject} entry={entry} />
               ))}
             </CardContent>
           </Card>

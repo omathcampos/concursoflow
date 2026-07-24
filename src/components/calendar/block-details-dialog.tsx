@@ -33,8 +33,10 @@ interface BlockDetailsDialogProps {
   block: Block;
   subject: Subject;
   topic?: Topic;
+  hasLinkedSession: boolean;
   onEdit: () => void;
-  onMarkStatus: (status: "done" | "skipped" | "planned") => void;
+  onMarkStatus: (status: "skipped" | "planned") => void;
+  onCompleteWithSession: () => void;
   onDelete: (scope: DeleteScope) => void;
   onNewAnnotation: () => void;
 }
@@ -45,8 +47,10 @@ export function BlockDetailsDialog({
   block,
   subject,
   topic,
+  hasLinkedSession,
   onEdit,
   onMarkStatus,
+  onCompleteWithSession,
   onDelete,
   onNewAnnotation,
 }: BlockDetailsDialogProps) {
@@ -73,7 +77,11 @@ export function BlockDetailsDialog({
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center gap-2">
               <Badge variant="secondary">{BLOCK_TYPE_LABELS[block.type]}</Badge>
-              {block.status === "done" ? <Badge variant="secondary">Concluído</Badge> : null}
+              {block.status === "done" ? (
+                <Badge variant="secondary">
+                  <Check className="h-3 w-3" /> Concluído
+                </Badge>
+              ) : null}
               {block.status === "skipped" ? <Badge variant="secondary">Pulado</Badge> : null}
             </div>
             {topic ? <p className="text-muted-foreground">Tópico: {topic.name}</p> : null}
@@ -82,10 +90,15 @@ export function BlockDetailsDialog({
               {format(new Date(block.endAt), "HH:mm", { locale: ptBR })}
             </p>
             {block.notes ? <p className="text-muted-foreground">{block.notes}</p> : null}
+            {hasLinkedSession ? <p className="text-muted-foreground">Sessão registrada para este bloco.</p> : null}
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => onMarkStatus(block.status === "done" ? "planned" : "done")}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => (block.status === "done" ? onMarkStatus("planned") : onCompleteWithSession())}
+            >
               <Check className="h-3.5 w-3.5" />
               {block.status === "done" ? "Desfazer" : "Concluído"}
             </Button>

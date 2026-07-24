@@ -73,6 +73,7 @@ export interface Session {
   questionsCorrect: number | null;
   pagesRead: number | null;
   notes: string | null;
+  scheduleReview: boolean; // intenção de agendar revisões espaçadas (lógica na Fase 5)
   createdAt: string;
 }
 

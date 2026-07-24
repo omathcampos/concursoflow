@@ -1,6 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
+import { Check } from "lucide-react";
 
 import { BLOCK_TYPE_LABELS } from "@/lib/calendar";
 import type { Block, Subject } from "@/lib/data/types";
@@ -56,7 +57,10 @@ export function EventBlock({ block, subject, top, height, interactive, onOpen }:
         block.status === "skipped" && "opacity-45 line-through decoration-2",
       )}
     >
-      <p className="truncate font-medium">{subject.name}</p>
+      <p className="flex items-center gap-1 truncate font-medium">
+        {block.status === "done" ? <Check className="h-3 w-3 shrink-0" /> : null}
+        {subject.name}
+      </p>
       {height >= 34 ? <p className="truncate opacity-90">{BLOCK_TYPE_LABELS[block.type]}</p> : null}
       {interactive ? (
         <div
