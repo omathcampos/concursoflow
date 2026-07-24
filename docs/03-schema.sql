@@ -28,6 +28,7 @@ create table public.subjects (
   name text not null,
   color text not null default '#8b5cf6',
   weight int not null default 3 check (weight between 1 and 5),
+  notes text,
   created_at timestamptz default now()
 );
 
@@ -38,6 +39,7 @@ create table public.topics (
   name text not null,
   status topic_status not null default 'not_started',
   position int not null default 0,
+  notes text,
   created_at timestamptz default now()
 );
 
@@ -89,6 +91,7 @@ create table public.sessions (
   questions_correct int check (questions_correct >= 0),
   pages_read int check (pages_read >= 0),
   notes text,
+  schedule_review boolean not null default false,  -- intenção de agendar revisão espaçada (fase 5)
   created_at timestamptz default now(),
   check (questions_correct is null or questions_total is null or questions_correct <= questions_total)
 );
@@ -106,11 +109,23 @@ create table public.reviews (
   created_at timestamptz default now()
 );
 
+create table public.annotations (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  subject_id uuid references public.subjects(id) on delete set null,
+  topic_id uuid references public.topics(id) on delete set null,
+  title text not null,
+  content text not null default '',        -- markdown
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- ---------- ÍNDICES ----------
 create index idx_blocks_user_start on public.blocks (user_id, start_at);
 create index idx_sessions_user_started on public.sessions (user_id, started_at);
 create index idx_reviews_user_due on public.reviews (user_id, due_date) where status = 'pending';
 create index idx_topics_subject on public.topics (subject_id);
+create index idx_annotations_user on public.annotations (user_id, updated_at desc);
 
 -- ---------- RLS (fase 8) ----------
 alter table public.profiles enable row level security;
@@ -121,6 +136,7 @@ alter table public.cycle_entries enable row level security;
 alter table public.blocks enable row level security;
 alter table public.sessions enable row level security;
 alter table public.reviews enable row level security;
+alter table public.annotations enable row level security;
 
 create policy "own profile" on public.profiles
   for all using (id = auth.uid()) with check (id = auth.uid());
@@ -129,7 +145,7 @@ create policy "own profile" on public.profiles
 do $$
 declare t text;
 begin
-  foreach t in array array['subjects','topics','cycles','cycle_entries','blocks','sessions','reviews'] loop
+  foreach t in array array['subjects','topics','cycles','cycle_entries','blocks','sessions','reviews','annotations'] loop
     execute format('create policy "own rows select" on public.%I for select using (user_id = auth.uid())', t);
     execute format('create policy "own rows insert" on public.%I for insert with check (user_id = auth.uid())', t);
     execute format('create policy "own rows update" on public.%I for update using (user_id = auth.uid()) with check (user_id = auth.uid())', t);

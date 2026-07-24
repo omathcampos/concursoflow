@@ -47,6 +47,7 @@ src/
 │   ├── materias/page.tsx
 │   ├── sessoes/page.tsx
 │   ├── revisoes/page.tsx
+│   ├── anotacoes/page.tsx
 │   └── (auth)/                 # fase 8: login, cadastro
 ├── components/
 │   ├── ui/                     # shadcn
@@ -68,8 +69,9 @@ src/
 
 ## Modelos de dados (resumo — schema completo em 03-schema.sql)
 
-- **subjects**: id, name, color, weight(1–5)
-- **topics**: id, subject_id, name, status
+- **subjects**: id, name, color, weight(1–5), notes
+- **topics**: id, subject_id, name, status, notes
+- **annotations**: id, subject_id?, topic_id?, title, content(markdown), updated_at
 - **cycles**: id, name, is_active / **cycle_entries**: cycle_id, subject_id, target_minutes, done_minutes(derivado)
 - **blocks** (calendário): id, subject_id, topic_id?, start_at, end_at, type, status, recurrence?
 - **sessions**: id, subject_id, topic_id?, block_id?, type, started_at, duration_min, questions_total?, questions_correct?, pages_read?, notes
@@ -81,6 +83,20 @@ src/
 - `scheduleReviews(session)`: cria review step 1 (D+1); concluir step N cria step N+1 (D+7, D+30).
 - `computeStreak(sessions)`: dias consecutivos com ≥1 sessão.
 - `detectOverlap(blocks, candidate)`: impede blocos sobrepostos no mesmo horário.
+
+## Migrations — versionamento e histórico (fase 7+)
+
+- **Nunca** alterar o banco por SQL avulso no dashboard: toda mudança de schema é uma migration versionada no repo.
+- Arquivos em `supabase/migrations/YYYYMMDDHHMMSS_nome_descritivo.sql` (gerados com `supabase migration new nome` — o timestamp no nome dá a ordem cronológica). Commitados no git como qualquer código.
+- O Supabase registra o que já foi aplicado em `supabase_migrations.schema_migrations` (fonte da verdade no banco; conferir com `supabase migration list`).
+- **`MIGRATIONS.md`** na raiz: changelog humano, atualizado no MESMO commit de cada migration. Tabela com: arquivo, descrição, data em que foi aplicada, ambiente (dev/prod), fase do projeto e observações (ex.: "requer backfill"). Exemplo:
+
+| Arquivo | Descrição | Aplicada em | Ambiente | Fase |
+|---|---|---|---|---|
+| `20260801120000_initial_schema.sql` | Schema inicial (docs/03-schema.sql) | 2026-08-01 | dev | 7 |
+
+- Migrations são **imutáveis** depois de aplicadas: correção = nova migration, nunca editar arquivo antigo.
+- O CI/PR checklist inclui: migration nova → linha correspondente no MIGRATIONS.md.
 
 ## Supabase (fase 7–8)
 

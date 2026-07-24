@@ -37,6 +37,7 @@ Calendário semanal (principal) e mensal com blocos de estudo remanejáveis por 
 - [ ] Vista mensal e navegação entre semanas corretas (testar virada de mês/ano).
 - [ ] Marcar concluído/pulado muda o visual do bloco.
 - [ ] Sem lag perceptível ao arrastar (não re-renderizar a grade inteira).
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 
 ## Não fazer
 - Vincular blocos a sessões (fase 4). Revisões no calendário (fase 5).

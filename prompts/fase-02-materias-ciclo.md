@@ -28,7 +28,7 @@ CRUD completo de matérias/tópicos e o ciclo de estudos funcional, tudo persist
 - [ ] Ciclo mostra progresso correto e sugere a matéria certa (testar: matéria com 0% e peso 5 vence matéria com 0% e peso 1).
 - [ ] Nova rodada zera barras e incrementa o número da rodada.
 - [ ] Nenhum componente importa Zustand/localStorage diretamente — só via `useRepo()`.
-- [ ] Sem erros de TypeScript.
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 
 ## Não fazer
 - Calendário, sessões reais, Supabase.

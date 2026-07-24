@@ -24,7 +24,7 @@ Criar o projeto Next.js com Tailwind, shadcn/ui, tema escuro, shell de navegaç�
 - [ ] Navegação entre as 6 páginas funciona, link ativo destacado na sidebar.
 - [ ] Sidebar colapsa em drawer no mobile (< 768px).
 - [ ] `types.ts` compila com todos os modelos (Subject, Topic, Cycle, CycleEntry, Block, Session, Review) e enums.
-- [ ] `npm run test` e `npm run e2e` passam local e no CI.
+- [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` passam local e no CI.
 
 ## Não fazer
 - Nenhuma funcionalidade real ainda. Nada de Supabase. Não criar páginas de login.
