@@ -53,6 +53,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [ ] Fase 8 — Autenticação
 - [ ] Fase 9 — Polimento + deploy (v1.0.0)
 - [ ] Fase 10 — Notificações email + Telegram (v1.1.0): lembrete diário, relatório semanal, alerta de revisões atrasadas
+- [ ] Fase 11 — Melhorias: anotações, observações e modo foco do cronômetro (anotações e observações já entregues na Fase 2 — escopo restante: modo foco em tela cheia com Wake Lock)
 
 **Backlog futuro:** anexar arquivos (PDFs, resumos, imagens) a matérias/tópicos/sessões via Supabase Storage.
 

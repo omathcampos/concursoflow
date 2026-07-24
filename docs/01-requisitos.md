@@ -73,10 +73,12 @@ App de cronograma de estudos para concursos, muito completo: ciclo de estudos, c
 - Preferências por usuário (toggles, canais, horário, timezone) e descadastro por link sem login.
 - Infra: Resend + Telegram Bot API + Supabase Edge Functions + pg_cron; conteúdo montado uma vez e despachado por canal.
 
-### RF09 — Caderno de Anotações
+### RF09 — Caderno de Anotações e melhorias (fase 11, pós-v1.1)
 - Página "Anotações": criar/editar/excluir anotações com título e conteúdo em markdown (editor simples com preview).
 - Anotação pode ser avulsa ou vinculada a matéria e/ou tópico; lista filtrável por matéria e busca por texto.
 - Atalhos: criar anotação a partir do card da matéria e do popover do bloco no calendário.
+- Observações em matérias e tópicos (campos `notes`).
+- Modo foco do cronômetro: tela cheia com tempo gigante, sem distrações, Wake Lock no mobile.
 
 ## Backlog — features futuras (pós-v1.1)
 

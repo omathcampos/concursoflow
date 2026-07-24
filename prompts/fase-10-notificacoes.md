@@ -9,12 +9,12 @@ Fases 0–9 concluídas: app em produção com Supabase + Auth. Leia `docs/02-ar
 Três envios automáticos — lembrete diário de manhã, relatório semanal e alerta de revisões atrasadas — por email e/ou Telegram, com preferências por usuário e opt-out.
 
 ## Tarefas
-1. **Resend**: criar conta/API key (usuário faz manualmente e fornece a key). Guardar como secret da Edge Function (`supabase secrets set RESEND_API_KEY=...`), nunca no repo. Enquanto não houver domínio próprio verificado, usar o domínio de teste do Resend (`onboarding@resend.dev`) e documentar a limitação (só envia para o email da conta Resend).
+1. **Resend**: ✅ conta e API key já criadas pelo usuário (jul/2026) — pedir a key na hora de configurar (ele guarda fora do repo; se perdida, gerar nova no painel). Guardar como secret da Edge Function (`supabase secrets set RESEND_API_KEY=...`), nunca no repo. Enquanto não houver domínio próprio verificado, usar o domínio de teste do Resend (`onboarding@resend.dev`) e documentar a limitação (só envia para o email da conta Resend).
 2. **Telegram bot**: criar via @BotFather (usuário faz manualmente, ex.: `@ConcursoFlowBot`) e fornecer o token → secret `TELEGRAM_BOT_TOKEN`. Vínculo de conta:
    - UI de preferências gera código curto de uso único (tabela `telegram_link_codes`: code, user_id, expires_at 10min) e mostra link `t.me/ConcursoFlowBot?start=CODIGO`.
    - Edge Function `telegram-webhook` (registrada via `setWebhook`, protegida por `secret_token` do Telegram): recebe `/start CODIGO` → valida código → salva `chat_id` em `notification_prefs.telegram_chat_id` → responde confirmação. Comando `/stop` desvincula.
    - Envio: `sendMessage` com `parse_mode: HTML` (versão compacta do conteúdo — Telegram é mensagem, não email: sem tabelas grandes, usar emojis e negrito).
-3. **Migration — preferências e log**:
+3. **Migration — preferências e log** (via `supabase migration new notifications`, registrando no `MIGRATIONS.md` conforme docs/02-arquitetura.md):
    - `notification_prefs`: user_id (pk, fk auth.users), daily_enabled (default true), daily_hour (default 7), weekly_enabled (default true), overdue_enabled (default true), channel_email (default true), channel_telegram (default false), telegram_chat_id (nullable), timezone (default 'America/Sao_Paulo'), unsubscribe_token uuid. RLS: cada usuário só a própria linha; criar junto com o profile no trigger `handle_new_user`.
    - `notification_log`: id, user_id, type ('daily'|'weekly'|'overdue'), channel ('email'|'telegram'), sent_at, status — para idempotência (não enviar 2x no mesmo dia por canal) e debug.
 4. **Edge Functions** (Deno, uma por tipo ou uma com router `?type=`; após montar o conteúdo, despachar para os senders dos canais habilitados do usuário):
