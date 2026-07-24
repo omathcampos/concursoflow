@@ -107,3 +107,113 @@ describe("LocalRepository — cycle", () => {
     expect(repo().cycle.entries(cycle.id).every((e) => e.doneMinutes === 0)).toBe(true);
   });
 });
+
+describe("LocalRepository — blocks", () => {
+  function makeSubject() {
+    return repo().subjects.create({ name: "Português", color: "#8b5cf6", weight: 3, notes: null });
+  }
+
+  it("cria, atualiza e remove um bloco avulso", () => {
+    const subject = makeSubject();
+    const block = repo().blocks.create({
+      subjectId: subject.id,
+      topicId: null,
+      type: "teoria",
+      status: "planned",
+      startAt: "2026-03-02T19:00:00.000Z",
+      endAt: "2026-03-02T21:00:00.000Z",
+      recurrenceRule: null,
+      notes: null,
+    });
+    expect(repo().blocks.list()).toHaveLength(1);
+
+    const updated = repo().blocks.update(block.id, { status: "done" });
+    expect(updated.status).toBe("done");
+
+    repo().blocks.remove(block.id);
+    expect(repo().blocks.list()).toHaveLength(0);
+  });
+
+  it("remover matéria também remove seus blocos", () => {
+    const subject = makeSubject();
+    repo().blocks.create({
+      subjectId: subject.id,
+      topicId: null,
+      type: "teoria",
+      status: "planned",
+      startAt: "2026-03-02T19:00:00.000Z",
+      endAt: "2026-03-02T21:00:00.000Z",
+      recurrenceRule: null,
+      notes: null,
+    });
+
+    repo().subjects.remove(subject.id);
+
+    expect(repo().blocks.list()).toHaveLength(0);
+  });
+
+  it("createSeries gera N ocorrências semanais com a mesma recurrenceRule", () => {
+    const subject = makeSubject();
+    const series = repo().blocks.createSeries(
+      {
+        subjectId: subject.id,
+        topicId: null,
+        type: "teoria",
+        status: "planned",
+        startAt: "2026-03-02T19:00:00.000Z",
+        endAt: "2026-03-02T21:00:00.000Z",
+        notes: null,
+      },
+      8,
+    );
+
+    expect(series).toHaveLength(8);
+    expect(new Set(series.map((b) => b.recurrenceRule)).size).toBe(1);
+    expect(series[0].recurrenceRule).toBeTruthy();
+    expect(series[1].startAt).toBe("2026-03-09T19:00:00.000Z");
+  });
+
+  it("removeSeries com scope 'this' remove só a ocorrência", () => {
+    const subject = makeSubject();
+    const series = repo().blocks.createSeries(
+      {
+        subjectId: subject.id,
+        topicId: null,
+        type: "teoria",
+        status: "planned",
+        startAt: "2026-03-02T19:00:00.000Z",
+        endAt: "2026-03-02T21:00:00.000Z",
+        notes: null,
+      },
+      4,
+    );
+
+    repo().blocks.removeSeries(series[1].id, "this");
+
+    expect(repo().blocks.list()).toHaveLength(3);
+    expect(repo().blocks.get(series[0].id)).toBeDefined();
+    expect(repo().blocks.get(series[2].id)).toBeDefined();
+  });
+
+  it("removeSeries com scope 'future' remove esta e as futuras, preservando as passadas", () => {
+    const subject = makeSubject();
+    const series = repo().blocks.createSeries(
+      {
+        subjectId: subject.id,
+        topicId: null,
+        type: "teoria",
+        status: "planned",
+        startAt: "2026-03-02T19:00:00.000Z",
+        endAt: "2026-03-02T21:00:00.000Z",
+        notes: null,
+      },
+      4,
+    );
+
+    repo().blocks.removeSeries(series[1].id, "future");
+
+    const remaining = repo().blocks.list();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe(series[0].id);
+  });
+});

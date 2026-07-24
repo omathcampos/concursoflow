@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { CycleSetupEntry } from "@/lib/data/repository";
-import type { Annotation, Cycle, CycleEntry, Subject, Topic } from "@/lib/data/types";
+import { generateWeeklyOccurrences } from "@/lib/domain/blocks";
+import type { CycleSetupEntry, DeleteScope } from "@/lib/data/repository";
+import type { Annotation, Block, Cycle, CycleEntry, Subject, Topic } from "@/lib/data/types";
 
 function uid(): string {
   return crypto.randomUUID();
@@ -18,6 +19,7 @@ export interface LocalState {
   annotations: Annotation[];
   cycles: Cycle[];
   cycleEntries: CycleEntry[];
+  blocks: Block[];
 
   createSubject: (input: Omit<Subject, "id" | "createdAt">) => Subject;
   updateSubject: (id: string, patch: Partial<Omit<Subject, "id" | "createdAt">>) => Subject;
@@ -35,6 +37,12 @@ export interface LocalState {
   addCycleProgress: (cycleId: string, subjectId: string, minutes: number) => void;
   startNewRound: (cycleId: string) => Cycle;
 
+  createBlock: (input: Omit<Block, "id" | "createdAt">) => Block;
+  updateBlock: (id: string, patch: Partial<Omit<Block, "id" | "createdAt">>) => Block;
+  removeBlock: (id: string) => void;
+  createBlockSeries: (input: Omit<Block, "id" | "createdAt" | "recurrenceRule">, weeksCount: number) => Block[];
+  removeBlockSeries: (id: string, scope: DeleteScope) => void;
+
   loadSeed: () => void;
 }
 
@@ -46,6 +54,7 @@ export const useLocalStore = create<LocalState>()(
       annotations: [],
       cycles: [],
       cycleEntries: [],
+      blocks: [],
 
       createSubject: (input) => {
         const subject: Subject = { id: uid(), createdAt: now(), ...input };
@@ -69,6 +78,7 @@ export const useLocalStore = create<LocalState>()(
           subjects: state.subjects.filter((subject) => subject.id !== id),
           topics: state.topics.filter((topic) => topic.subjectId !== id),
           cycleEntries: state.cycleEntries.filter((entry) => entry.subjectId !== id),
+          blocks: state.blocks.filter((block) => block.subjectId !== id),
           annotations: state.annotations.map((annotation) =>
             annotation.subjectId === id ? { ...annotation, subjectId: null } : annotation,
           ),
@@ -175,6 +185,58 @@ export const useLocalStore = create<LocalState>()(
         }));
         if (!updated) throw new Error(`Cycle ${cycleId} não encontrado`);
         return updated;
+      },
+
+      createBlock: (input) => {
+        const block: Block = { id: uid(), createdAt: now(), ...input };
+        set((state) => ({ blocks: [...state.blocks, block] }));
+        return block;
+      },
+      updateBlock: (id, patch) => {
+        let updated: Block | undefined;
+        set((state) => ({
+          blocks: state.blocks.map((block) => {
+            if (block.id !== id) return block;
+            updated = { ...block, ...patch };
+            return updated;
+          }),
+        }));
+        if (!updated) throw new Error(`Block ${id} não encontrado`);
+        return updated;
+      },
+      removeBlock: (id) => {
+        set((state) => ({ blocks: state.blocks.filter((block) => block.id !== id) }));
+      },
+      createBlockSeries: (input, weeksCount) => {
+        const recurrenceRule = `WEEKLY:${uid()}`;
+        const occurrences = generateWeeklyOccurrences(input.startAt, input.endAt, weeksCount);
+        const blocks: Block[] = occurrences.map((occurrence) => ({
+          id: uid(),
+          createdAt: now(),
+          ...input,
+          startAt: occurrence.startAt,
+          endAt: occurrence.endAt,
+          recurrenceRule,
+        }));
+        set((state) => ({ blocks: [...state.blocks, ...blocks] }));
+        return blocks;
+      },
+      removeBlockSeries: (id, scope) => {
+        const target = get().blocks.find((block) => block.id === id);
+        if (!target) return;
+
+        if (scope === "this" || !target.recurrenceRule) {
+          set((state) => ({ blocks: state.blocks.filter((block) => block.id !== id) }));
+          return;
+        }
+
+        const targetStart = new Date(target.startAt).getTime();
+        set((state) => ({
+          blocks: state.blocks.filter(
+            (block) =>
+              !(block.recurrenceRule === target.recurrenceRule && new Date(block.startAt).getTime() >= targetStart),
+          ),
+        }));
       },
 
       loadSeed: () => {
