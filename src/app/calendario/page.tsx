@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { startOfWeek } from "@/lib/calendar";
 import type { DeleteScope } from "@/lib/data/repository";
-import type { Block } from "@/lib/data/types";
+import type { Block, Review } from "@/lib/data/types";
 import { useRepo } from "@/lib/data/use-repo";
 import { detectOverlap } from "@/lib/domain/blocks";
 import type { SessionFormData } from "@/lib/domain/session-validation";
@@ -41,11 +41,13 @@ export default function CalendarioPage() {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [detailsBlockId, setDetailsBlockId] = useState<string | null>(null);
   const [completingBlockId, setCompletingBlockId] = useState<string | null>(null);
+  const [completingReviewId, setCompletingReviewId] = useState<string | null>(null);
 
   const subjects = repo.subjects.list();
   const topics = repo.topics.list();
   const blocks = repo.blocks.list();
   const sessions = repo.sessions.list();
+  const reviews = repo.reviews.list();
   const subjectsById = new Map(subjects.map((s) => [s.id, s]));
 
   // Deriva sempre dos dados vivos do repo — nunca guarda cópia do bloco em
@@ -53,6 +55,7 @@ export default function CalendarioPage() {
   const editingBlock = editingBlockId ? (blocks.find((b) => b.id === editingBlockId) ?? null) : null;
   const detailsBlock = detailsBlockId ? (blocks.find((b) => b.id === detailsBlockId) ?? null) : null;
   const completingBlock = completingBlockId ? (blocks.find((b) => b.id === completingBlockId) ?? null) : null;
+  const completingReview = completingReviewId ? (reviews.find((r) => r.id === completingReviewId) ?? null) : null;
 
   function shift(amount: number) {
     if (view === "week") setAnchorDate((d) => addDays(d, amount * 7));
@@ -144,6 +147,30 @@ export default function CalendarioPage() {
     setDetailsBlockId(null);
   }
 
+  function submitCompleteReview(data: SessionFormData) {
+    if (!completingReview) return;
+    const cycle = repo.cycle.getActive();
+    const inCycle = cycle && repo.cycle.entries(cycle.id).some((e) => e.subjectId === data.subjectId);
+    repo.sessions.create({
+      ...data,
+      blockId: null,
+      cycleId: inCycle ? cycle!.id : null,
+      cycleRound: inCycle ? cycle!.round : null,
+    });
+    repo.reviews.complete(completingReview.id);
+    setCompletingReviewId(null);
+  }
+
+  function skipReview(review: Review) {
+    repo.reviews.skip(review.id);
+    toast("Revisão pulada", {
+      action: {
+        label: "Desfazer",
+        onClick: () => repo.reviews.update(review.id, { status: "pending" }),
+      },
+    });
+  }
+
   const weekStart = startOfWeek(anchorDate);
   const detailsSubject = detailsBlock ? subjectsById.get(detailsBlock.subjectId) : undefined;
   const detailsTopic = detailsBlock?.topicId ? topics.find((t) => t.id === detailsBlock.topicId) : undefined;
@@ -192,11 +219,14 @@ export default function CalendarioPage() {
           <WeekGrid
             weekStart={weekStart}
             blocks={blocks}
+            reviews={reviews}
             subjectsById={subjectsById}
             onCreateAt={(date) => setCreateDialog({ date })}
             onOpenBlock={(block) => setDetailsBlockId(block.id)}
             onMoveBlock={moveBlock}
             onResizeBlock={resizeBlock}
+            onCompleteReview={(review) => setCompletingReviewId(review.id)}
+            onSkipReview={skipReview}
           />
         ) : (
           <MonthGrid
@@ -283,6 +313,23 @@ export default function CalendarioPage() {
             ),
           }}
           onSubmit={submitCompleteSession}
+        />
+      ) : null}
+
+      {completingReview ? (
+        <SessionFormDialog
+          open
+          onOpenChange={(open) => !open && setCompletingReviewId(null)}
+          subjects={subjects}
+          topics={topics}
+          title="Revisado — registrar sessão"
+          initial={{
+            subjectId: completingReview.subjectId,
+            topicId: completingReview.topicId,
+            type: "revisao",
+            scheduleReview: false,
+          }}
+          onSubmit={submitCompleteReview}
         />
       ) : null}
     </div>

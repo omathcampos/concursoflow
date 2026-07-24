@@ -1,4 +1,4 @@
-import type { BlockRepo, CrudRepo, CycleRepo, Repository } from "@/lib/data/repository";
+import type { BlockRepo, CrudRepo, CycleRepo, Repository, ReviewRepo } from "@/lib/data/repository";
 import type { LocalState } from "@/lib/data/local/store";
 
 function makeCrudRepo<T extends { id: string }, Managed extends keyof T>(
@@ -72,5 +72,14 @@ export function createLocalRepository(state: LocalState): Repository {
       update: state.updateSession,
       remove: state.removeSession,
     }),
+    reviews: {
+      ...makeCrudRepo(() => state.reviews, {
+        create: state.createReview,
+        update: state.updateReview,
+        remove: state.removeReview,
+      }),
+      complete: state.completeReview,
+      skip: state.skipReview,
+    } satisfies ReviewRepo,
   };
 }

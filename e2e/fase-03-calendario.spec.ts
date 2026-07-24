@@ -148,13 +148,15 @@ test("marcar concluído registra sessão vinculada e muda o visual do bloco", as
   await createSubject(page, "Biologia");
   await createBlockAt(page, "Biologia", 11);
 
-  await page.getByRole("button", { name: /Biologia/ }).click();
+  // Nome exato do bloco ("Matéria Tipo") — desde a Fase 5, o chip de revisão
+  // agendado para amanhã também tem "Biologia" no nome acessível.
+  await page.getByRole("button", { name: "Biologia Teoria" }).click();
   // Desde a Fase 4, "Concluído" abre o formulário de sessão (vinculado ao bloco).
   await page.getByRole("button", { name: "Concluído" }).click();
   const sessionDialog = page.getByRole("dialog", { name: "Concluir bloco — registrar sessão" });
   await sessionDialog.getByRole("button", { name: "Salvar" }).click();
 
-  await page.getByRole("button", { name: /Biologia/ }).click();
+  await page.getByRole("button", { name: "Biologia Teoria" }).click();
   await expect(page.getByText("Concluído")).toBeVisible();
   await expect(page.getByText("Sessão registrada para este bloco.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Desfazer" })).toBeVisible();

@@ -307,3 +307,90 @@ describe("LocalRepository — blocks", () => {
     expect(remaining[0].id).toBe(series[0].id);
   });
 });
+
+describe("LocalRepository — reviews (agendamento automático via sessão)", () => {
+  function makeSubjectWithTopic() {
+    const subject = repo().subjects.create({ name: "Português", color: "#8b5cf6", weight: 3, notes: null });
+    const topic = repo().topics.create({
+      subjectId: subject.id,
+      name: "Crase",
+      status: "not_started",
+      position: 0,
+      notes: null,
+    });
+    return { subject, topic };
+  }
+
+  it("sessão com opt-in cria a revisão step 1 (D+1)", () => {
+    const { subject, topic } = makeSubjectWithTopic();
+    const session = makeSession({ subjectId: subject.id, topicId: topic.id, scheduleReview: true });
+
+    const reviews = repo().reviews.list();
+    expect(reviews).toHaveLength(1);
+    expect(reviews[0].step).toBe(1);
+    expect(reviews[0].status).toBe("pending");
+    expect(reviews[0].sessionId).toBe(session.id);
+    expect(reviews[0].topicId).toBe(topic.id);
+  });
+
+  it("sessão sem opt-in não cria revisão", () => {
+    const { subject } = makeSubjectWithTopic();
+    makeSession({ subjectId: subject.id, scheduleReview: false });
+    expect(repo().reviews.list()).toHaveLength(0);
+  });
+
+  it("concluir a revisão marca done e agenda a próxima do ciclo", () => {
+    const { subject, topic } = makeSubjectWithTopic();
+    makeSession({ subjectId: subject.id, topicId: topic.id, scheduleReview: true });
+    const [first] = repo().reviews.list();
+
+    repo().reviews.complete(first.id);
+
+    const all = repo().reviews.list();
+    expect(all).toHaveLength(2);
+    const completed = all.find((r) => r.id === first.id)!;
+    expect(completed.status).toBe("done");
+    expect(completed.completedAt).toBeTruthy();
+    const next = all.find((r) => r.id !== first.id)!;
+    expect(next.step).toBe(2);
+    expect(next.status).toBe("pending");
+  });
+
+  it("concluir a revisão step 3 encerra o ciclo (nenhuma nova revisão)", () => {
+    const { subject } = makeSubjectWithTopic();
+    makeSession({ subjectId: subject.id, scheduleReview: true });
+    let [review] = repo().reviews.list();
+
+    repo().reviews.complete(review.id); // -> step 2
+    review = repo().reviews.list().find((r) => r.status === "pending")!;
+    repo().reviews.complete(review.id); // -> step 3
+    review = repo().reviews.list().find((r) => r.status === "pending")!;
+    repo().reviews.complete(review.id); // -> encerra
+
+    const pending = repo().reviews.list().filter((r) => r.status === "pending");
+    expect(pending).toHaveLength(0);
+  });
+
+  it("pular a revisão marca skipped e não agenda a próxima", () => {
+    const { subject } = makeSubjectWithTopic();
+    makeSession({ subjectId: subject.id, scheduleReview: true });
+    const [review] = repo().reviews.list();
+
+    repo().reviews.skip(review.id);
+
+    const all = repo().reviews.list();
+    expect(all).toHaveLength(1);
+    expect(all[0].status).toBe("skipped");
+  });
+
+  it("remover a matéria remove as revisões; remover o tópico só desvincula", () => {
+    const { subject, topic } = makeSubjectWithTopic();
+    makeSession({ subjectId: subject.id, topicId: topic.id, scheduleReview: true });
+
+    repo().topics.remove(topic.id);
+    expect(repo().reviews.list()[0].topicId).toBeNull();
+
+    repo().subjects.remove(subject.id);
+    expect(repo().reviews.list()).toHaveLength(0);
+  });
+});

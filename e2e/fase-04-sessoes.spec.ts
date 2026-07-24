@@ -71,7 +71,9 @@ test("concluir bloco do calendário gera sessão vinculada e o bloco mostra Conc
   await page.getByRole("option", { name: "Auditoria" }).click();
   await createDialog.getByRole("button", { name: "Criar bloco" }).click();
 
-  await page.getByRole("button", { name: /Auditoria/ }).click();
+  // Nome exato do bloco ("Matéria Tipo") — desde a Fase 5, o chip de revisão
+  // agendado para amanhã também tem "Auditoria" no nome acessível.
+  await page.getByRole("button", { name: "Auditoria Teoria" }).click();
   const detailsDialog = page.getByRole("dialog", { name: "Auditoria" });
   await detailsDialog.getByRole("button", { name: "Concluído" }).click();
 
@@ -79,7 +81,7 @@ test("concluir bloco do calendário gera sessão vinculada e o bloco mostra Conc
   await expect(sessionDialog.getByRole("combobox").first()).toContainText("Auditoria");
   await sessionDialog.getByRole("button", { name: "Salvar" }).click();
 
-  await page.getByRole("button", { name: /Auditoria/ }).click();
+  await page.getByRole("button", { name: "Auditoria Teoria" }).click();
   await expect(page.getByText("Sessão registrada para este bloco.")).toBeVisible();
   await expect(page.getByText("Concluído")).toBeVisible();
 });

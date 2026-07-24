@@ -2,9 +2,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { generateWeeklyOccurrences } from "@/lib/domain/blocks";
+import { nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
 import { IDLE_TIMER, pauseTimer, resumeTimer, startTimer, stopTimer, type TimerState } from "@/lib/domain/timer";
 import type { CycleSetupEntry, DeleteScope } from "@/lib/data/repository";
-import type { Annotation, Block, Cycle, CycleEntry, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 function uid(): string {
   return crypto.randomUUID();
@@ -22,6 +23,7 @@ export interface LocalState {
   cycleEntries: CycleEntry[];
   blocks: Block[];
   sessions: Session[];
+  reviews: Review[];
   timer: TimerState;
 
   createSubject: (input: Omit<Subject, "id" | "createdAt">) => Subject;
@@ -49,6 +51,12 @@ export interface LocalState {
   updateSession: (id: string, patch: Partial<Omit<Session, "id" | "createdAt">>) => Session;
   removeSession: (id: string) => void;
 
+  createReview: (input: Omit<Review, "id" | "createdAt">) => Review;
+  updateReview: (id: string, patch: Partial<Omit<Review, "id" | "createdAt">>) => Review;
+  removeReview: (id: string) => void;
+  completeReview: (id: string) => void;
+  skipReview: (id: string) => void;
+
   startTimerFor: (subjectId: string) => void;
   pauseTimerNow: () => void;
   resumeTimerNow: () => void;
@@ -67,6 +75,7 @@ export const useLocalStore = create<LocalState>()(
       cycleEntries: [],
       blocks: [],
       sessions: [],
+      reviews: [],
       timer: IDLE_TIMER,
 
       createSubject: (input) => {
@@ -93,6 +102,7 @@ export const useLocalStore = create<LocalState>()(
           cycleEntries: state.cycleEntries.filter((entry) => entry.subjectId !== id),
           blocks: state.blocks.filter((block) => block.subjectId !== id),
           sessions: state.sessions.filter((session) => session.subjectId !== id),
+          reviews: state.reviews.filter((review) => review.subjectId !== id),
           annotations: state.annotations.map((annotation) =>
             annotation.subjectId === id ? { ...annotation, subjectId: null } : annotation,
           ),
@@ -124,6 +134,9 @@ export const useLocalStore = create<LocalState>()(
           ),
           sessions: state.sessions.map((session) =>
             session.topicId === id ? { ...session, topicId: null } : session,
+          ),
+          reviews: state.reviews.map((review) =>
+            review.topicId === id ? { ...review, topicId: null } : review,
           ),
         }));
       },
@@ -257,6 +270,14 @@ export const useLocalStore = create<LocalState>()(
       createSession: (input) => {
         const session: Session = { id: uid(), createdAt: now(), ...input };
         set((state) => ({ sessions: [...state.sessions, session] }));
+        if (session.scheduleReview) {
+          const review = scheduleFirstReview({
+            sessionId: session.id,
+            subjectId: session.subjectId,
+            topicId: session.topicId,
+          });
+          get().createReview(review);
+        }
         return session;
       },
       updateSession: (id, patch) => {
@@ -272,7 +293,41 @@ export const useLocalStore = create<LocalState>()(
         return updated;
       },
       removeSession: (id) => {
-        set((state) => ({ sessions: state.sessions.filter((session) => session.id !== id) }));
+        set((state) => ({
+          sessions: state.sessions.filter((session) => session.id !== id),
+          reviews: state.reviews.filter((review) => review.sessionId !== id),
+        }));
+      },
+
+      createReview: (input) => {
+        const review: Review = { id: uid(), createdAt: now(), ...input };
+        set((state) => ({ reviews: [...state.reviews, review] }));
+        return review;
+      },
+      updateReview: (id, patch) => {
+        let updated: Review | undefined;
+        set((state) => ({
+          reviews: state.reviews.map((review) => {
+            if (review.id !== id) return review;
+            updated = { ...review, ...patch };
+            return updated;
+          }),
+        }));
+        if (!updated) throw new Error(`Review ${id} não encontrada`);
+        return updated;
+      },
+      removeReview: (id) => {
+        set((state) => ({ reviews: state.reviews.filter((review) => review.id !== id) }));
+      },
+      completeReview: (id) => {
+        const review = get().reviews.find((r) => r.id === id);
+        if (!review) throw new Error(`Review ${id} não encontrada`);
+        get().updateReview(id, { status: "done", completedAt: now() });
+        const next = nextReviewStep(review);
+        if (next) get().createReview(next);
+      },
+      skipReview: (id) => {
+        get().updateReview(id, { status: "skipped" });
       },
 
       startTimerFor: (subjectId) => set({ timer: startTimer(subjectId) }),
