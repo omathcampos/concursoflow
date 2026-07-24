@@ -31,6 +31,7 @@ export function ImportLocalDataBanner() {
   const [importing, setImporting] = useState(false);
   const subjectsInSupabase = useSupabaseCache((s) => s.subjects.length);
   const cacheReady = useSupabaseCache((s) => s.status === "ready");
+  const userId = useSupabaseCache((s) => s.userId);
 
   if (getDataSource() !== "supabase") return null;
   if (!cacheReady || subjectsInSupabase > 0) return null;
@@ -40,10 +41,10 @@ export function ImportLocalDataBanner() {
   if (localCount === 0) return null;
 
   async function handleImport() {
+    if (!userId) return;
     setImporting(true);
     try {
       const client = getSupabaseBrowserClient();
-      const userId = process.env.NEXT_PUBLIC_DEV_USER_ID!;
       const summary = await importLocalDataToSupabase(client, userId);
       const total = Object.values(summary).reduce((sum, n) => sum + n, 0);
       toast.success(`Importação concluída: ${total} registros trazidos para o servidor.`);

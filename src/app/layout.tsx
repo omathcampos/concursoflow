@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
-import { AppShell } from "@/components/layout/app-shell";
-import { DataProvider } from "@/components/providers/data-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,9 +26,7 @@ export default function RootLayout({
       <body className="antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <TooltipProvider>
-            <DataProvider>
-              <AppShell>{children}</AppShell>
-            </DataProvider>
+            {children}
             <Toaster />
           </TooltipProvider>
         </ThemeProvider>

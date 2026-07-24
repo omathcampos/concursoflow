@@ -24,17 +24,19 @@ function BootScreen({ icon, message }: { icon: React.ReactNode; message: string 
 
 /**
  * Faz o boot do backend Supabase quando NEXT_PUBLIC_DATA_SOURCE=supabase:
- * login do usuário técnico (fase 7 — fase 8 troca pelo usuário real) e
- * hidratação do cache reativo. Bloqueia a renderização do app até o cache
- * estar pronto (evita qualquer página piscar estado vazio). Refaz a
- * hidratação quando a janela ganha foco, para refletir mudanças feitas em
- * outra aba/dispositivo. Com DATA_SOURCE=local não faz nada — o Zustand
- * local já está pronto de imediato.
+ * lê o usuário autenticado (o middleware já garante que existe uma sessão
+ * antes desta rota renderizar) e hidrata o cache reativo. Bloqueia a
+ * renderização do app até o cache estar pronto (evita qualquer página
+ * piscar estado vazio). Refaz a hidratação quando a janela ganha foco, e
+ * também ao trocar de usuário (logout/login) via onAuthStateChange. Com
+ * DATA_SOURCE=local não faz nada — o Zustand local já está pronto de imediato.
  */
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const dataSource = getDataSource();
   const status = useSupabaseCache((s) => s.status);
   const cacheError = useSupabaseCache((s) => s.error);
+  const setUserId = useSupabaseCache((s) => s.setUserId);
+  const setStatus = useSupabaseCache((s) => s.setStatus);
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,18 +44,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     let cancelled = false;
     const client = getSupabaseBrowserClient();
-    const userId = process.env.NEXT_PUBLIC_DEV_USER_ID!;
 
-    async function boot() {
-      const { error: signInError } = await client.auth.signInWithPassword({
-        email: process.env.NEXT_PUBLIC_DEV_USER_EMAIL!,
-        password: process.env.NEXT_PUBLIC_DEV_USER_PASSWORD!,
-      });
-      if (cancelled) return;
-      if (signInError) {
-        setAuthError(signInError.message);
-        return;
-      }
+    async function hydrateFor(userId: string) {
       try {
         await hydrateSupabaseCache(client, userId);
       } catch {
@@ -66,16 +58,50 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    async function boot() {
+      const {
+        data: { user },
+        error: userError,
+      } = await client.auth.getUser();
+      if (cancelled) return;
+
+      if (userError || !user) {
+        setAuthError(userError?.message ?? "Sessão não encontrada.");
+        return;
+      }
+
+      setUserId(user.id);
+      await hydrateFor(user.id);
+    }
+
     boot();
 
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        setUserId(null);
+        setStatus("idle");
+        return;
+      }
+      if (event === "SIGNED_IN" && session?.user) {
+        setUserId(session.user.id);
+        hydrateFor(session.user.id);
+      }
+    });
+
     function onFocus() {
-      hydrateSupabaseCache(client, userId).catch(() => {});
+      const userId = useSupabaseCache.getState().userId;
+      if (userId) hydrateFor(userId).catch(() => {});
     }
     window.addEventListener("focus", onFocus);
+
     return () => {
       cancelled = true;
+      subscription.unsubscribe();
       window.removeEventListener("focus", onFocus);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSource]);
 
   if (dataSource !== "supabase") return <>{children}</>;

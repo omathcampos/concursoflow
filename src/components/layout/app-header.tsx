@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { ExamCountdown } from "@/components/layout/exam-countdown";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppHeader() {
@@ -16,6 +17,7 @@ export function AppHeader() {
       <div className="ml-auto flex items-center gap-3">
         <ExamCountdown />
         <ThemeToggle />
+        <UserMenu />
       </div>
     </header>
   );

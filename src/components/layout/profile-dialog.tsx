@@ -8,14 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Profile } from "@/lib/data/types";
 
-interface ExamSettingsDialogProps {
+interface ProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   profile: Profile;
-  onSubmit: (patch: { targetExam: string | null; examDate: string | null }) => void;
+  onSubmit: (patch: { displayName: string | null; targetExam: string | null; examDate: string | null }) => void;
 }
 
-export function ExamSettingsDialog({ open, onOpenChange, profile, onSubmit }: ExamSettingsDialogProps) {
+export function ProfileDialog({ open, onOpenChange, profile, onSubmit }: ProfileDialogProps) {
+  const [displayName, setDisplayName] = useState(profile.displayName ?? "");
   const [targetExam, setTargetExam] = useState(profile.targetExam ?? "");
   const [examDate, setExamDate] = useState(profile.examDate ?? "");
   const [wasOpen, setWasOpen] = useState(open);
@@ -23,25 +24,31 @@ export function ExamSettingsDialog({ open, onOpenChange, profile, onSubmit }: Ex
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
+      setDisplayName(profile.displayName ?? "");
       setTargetExam(profile.targetExam ?? "");
       setExamDate(profile.examDate ?? "");
     }
   }
 
   function handleSubmit() {
-    onSubmit({ targetExam: targetExam.trim() || null, examDate: examDate || null });
+    onSubmit({ displayName: displayName.trim() || null, targetExam: targetExam.trim() || null, examDate: examDate || null });
+    onOpenChange(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Configurar prova</DialogTitle>
+          <DialogTitle>Perfil</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="exam-name">Nome do concurso</Label>
+            <Label htmlFor="profile-name">Nome de exibição</Label>
+            <Input id="profile-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Como podemos te chamar?" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="exam-name">Concurso-alvo</Label>
             <Input id="exam-name" value={targetExam} onChange={(e) => setTargetExam(e.target.value)} placeholder="Ex: TRT-15" />
           </div>
           <div className="flex flex-col gap-1.5">

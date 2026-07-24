@@ -4,7 +4,7 @@ import { differenceInCalendarDays, parseISO } from "date-fns";
 import { Hourglass } from "lucide-react";
 import { useState } from "react";
 
-import { ExamSettingsDialog } from "@/components/layout/exam-settings-dialog";
+import { ProfileDialog } from "@/components/layout/profile-dialog";
 import { useRepo } from "@/lib/data/use-repo";
 
 export function ExamCountdown() {
@@ -32,13 +32,12 @@ export function ExamCountdown() {
         )}
       </button>
 
-      <ExamSettingsDialog
+      <ProfileDialog
         open={open}
         onOpenChange={setOpen}
         profile={profile}
         onSubmit={(patch) => {
           repo.profile.update(patch);
-          setOpen(false);
         }}
       />
     </>
