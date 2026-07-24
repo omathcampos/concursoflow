@@ -4,6 +4,11 @@
 
 > Feito para quem estuda com Tec Concursos (questões) e Estratégia Concursos (aulas/PDFs) — mas serve para qualquer rotina de estudos.
 
+**🔗 [App em produção](https://concursoflow-alpha.vercel.app)**
+
+![Dashboard do ConcursoFlow](./public/screenshot-dashboard.png)
+![Calendário do ConcursoFlow](./public/screenshot-calendario.png)
+
 ## ✨ Features
 
 - **Ciclo de estudos** — defina horas-alvo por matéria e siga o rodízio; o app sugere o que estudar agora com base no seu progresso e nos pesos do edital.
@@ -18,19 +23,19 @@
 
 ## 🛠️ Stack
 
-Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui · Zustand · @dnd-kit · Recharts · Supabase (Postgres + Auth + RLS) · Vercel
+Next.js 16 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · shadcn/ui (Base UI) · Zustand · @dnd-kit · Recharts · Supabase (Postgres + Auth + RLS) · Vercel
 
 ## 🚀 Rodando localmente
 
 ```bash
-git clone <url-do-repo>
+git clone https://github.com/omathcampos/concursoflow.git
 cd concursoflow
 npm install
-cp .env.example .env.local   # preencha com as chaves do seu projeto Supabase
+cp .env.local.example .env.local   # preencha com as chaves do seu projeto Supabase
 npm run dev
 ```
 
-Variáveis necessárias (a partir da fase 7):
+Variáveis necessárias (a partir da fase 7 — sem elas, ou sem `NEXT_PUBLIC_DATA_SOURCE=supabase`, o app cai automaticamente para o modo `local`/offline):
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
@@ -51,7 +56,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 6 — Dashboard
 - [x] Fase 7 — Supabase
 - [x] Fase 8 — Autenticação
-- [ ] Fase 9 — Polimento + deploy (v1.0.0)
+- [x] Fase 9 — Polimento + deploy (v1.0.0)
 - [ ] Fase 10 — Notificações email + Telegram (v1.1.0): lembrete diário, relatório semanal, alerta de revisões atrasadas
 - [ ] Fase 11 — Melhorias: anotações, observações e modo foco do cronômetro (anotações e observações já entregues na Fase 2 — escopo restante: modo foco em tela cheia com Wake Lock)
 

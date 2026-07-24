@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 interface AnnotationListProps {
   annotations: Annotation[];
+  hasAnyAnnotations: boolean;
   subjects: Subject[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -33,6 +34,7 @@ function subjectFor(subjects: Subject[], id: string | null) {
 
 export function AnnotationList({
   annotations,
+  hasAnyAnnotations,
   subjects,
   selectedId,
   onSelect,
@@ -80,7 +82,17 @@ export function AnnotationList({
 
       <div className="flex flex-col gap-1 overflow-y-auto">
         {annotations.length === 0 ? (
-          <p className="px-1 py-4 text-sm text-muted-foreground">Nenhuma anotação encontrada.</p>
+          <div className="flex flex-col items-center gap-2 px-1 py-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              {hasAnyAnnotations ? "Nenhuma anotação encontrada para essa busca." : "Nenhuma anotação ainda."}
+            </p>
+            {hasAnyAnnotations ? null : (
+              <Button size="sm" variant="outline" onClick={onCreate}>
+                <Plus className="h-4 w-4" />
+                Criar primeira anotação
+              </Button>
+            )}
+          </div>
         ) : (
           annotations.map((annotation) => {
             const subject = subjectFor(subjects, annotation.subjectId);

@@ -67,6 +67,7 @@ function AnotacoesContent() {
         <div className={cn("flex flex-col overflow-hidden", selected ? "hidden md:flex" : "flex")}>
           <AnnotationList
             annotations={filtered}
+            hasAnyAnnotations={annotations.length > 0}
             subjects={subjects}
             selectedId={selectedId}
             onSelect={setSelectedId}

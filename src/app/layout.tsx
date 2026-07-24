@@ -14,6 +14,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ConcursoFlow",
   description: "Cronograma de estudos inteligente para concurseiros.",
+  icons: {
+    icon: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ConcursoFlow",
+  },
 };
 
 export default function RootLayout({

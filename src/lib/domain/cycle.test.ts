@@ -31,6 +31,14 @@ describe("suggestNextSubject", () => {
     expect(result).toBe("peso-alto");
   });
 
+  it("em empate de progresso, mantém a primeira quando ela já tem o maior peso", () => {
+    const result = suggestNextSubject([
+      { subjectId: "peso-alto", weight: 5, targetMinutes: 60, doneMinutes: 0 },
+      { subjectId: "peso-baixo", weight: 1, targetMinutes: 60, doneMinutes: 0 },
+    ]);
+    expect(result).toBe("peso-alto");
+  });
+
   it("ignora matérias sem carga-horária alvo (target 0)", () => {
     const result = suggestNextSubject([
       { subjectId: "sem-meta", weight: 5, targetMinutes: 0, doneMinutes: 0 },
