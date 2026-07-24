@@ -48,7 +48,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 3 — Calendário com drag & drop
 - [x] Fase 4 — Sessões + cronômetro
 - [x] Fase 5 — Revisões espaçadas
-- [ ] Fase 6 — Dashboard
+- [x] Fase 6 — Dashboard
 - [ ] Fase 7 — Supabase
 - [ ] Fase 8 — Autenticação
 - [ ] Fase 9 — Polimento + deploy (v1.0.0)
