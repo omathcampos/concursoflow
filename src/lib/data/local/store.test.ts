@@ -394,3 +394,15 @@ describe("LocalRepository — reviews (agendamento automático via sessão)", ()
     expect(repo().reviews.list()).toHaveLength(0);
   });
 });
+
+describe("LocalRepository — profile", () => {
+  it("começa vazio e atualiza parcialmente preservando os demais campos", () => {
+    expect(repo().profile.get()).toMatchObject({ displayName: null, targetExam: null, examDate: null });
+
+    repo().profile.update({ targetExam: "TRT-15", examDate: "2026-12-01" });
+    expect(repo().profile.get()).toMatchObject({ targetExam: "TRT-15", examDate: "2026-12-01", displayName: null });
+
+    repo().profile.update({ displayName: "Fulano" });
+    expect(repo().profile.get()).toMatchObject({ targetExam: "TRT-15", examDate: "2026-12-01", displayName: "Fulano" });
+  });
+});

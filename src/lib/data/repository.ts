@@ -1,4 +1,4 @@
-import type { Annotation, Block, Cycle, CycleEntry, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 export interface CrudRepo<T, Managed extends keyof T> {
   list(): T[];
@@ -37,6 +37,11 @@ export interface ReviewRepo extends CrudRepo<Review, "id" | "createdAt"> {
   skip(id: string): void;
 }
 
+export interface ProfileRepo {
+  get(): Profile;
+  update(patch: Partial<Pick<Profile, "displayName" | "targetExam" | "examDate">>): Profile;
+}
+
 export interface Repository {
   subjects: CrudRepo<Subject, "id" | "createdAt">;
   topics: CrudRepo<Topic, "id" | "createdAt">;
@@ -45,4 +50,5 @@ export interface Repository {
   blocks: BlockRepo;
   sessions: CrudRepo<Session, "id" | "createdAt">;
   reviews: ReviewRepo;
+  profile: ProfileRepo;
 }

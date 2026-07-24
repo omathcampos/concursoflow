@@ -1,4 +1,4 @@
-import type { BlockRepo, CrudRepo, CycleRepo, Repository, ReviewRepo } from "@/lib/data/repository";
+import type { BlockRepo, CrudRepo, CycleRepo, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
 import type { LocalState } from "@/lib/data/local/store";
 
 function makeCrudRepo<T extends { id: string }, Managed extends keyof T>(
@@ -81,5 +81,9 @@ export function createLocalRepository(state: LocalState): Repository {
       complete: state.completeReview,
       skip: state.skipReview,
     } satisfies ReviewRepo,
+    profile: {
+      get: () => state.profile,
+      update: state.updateProfile,
+    } satisfies ProfileRepo,
   };
 }
