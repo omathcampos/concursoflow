@@ -1,5 +1,6 @@
 "use client";
 
+import { ImportLocalDataBanner } from "@/components/data/import-local-data-banner";
 import { HoursByDayChart } from "@/components/dashboard/hours-by-day-chart";
 import { HoursBySubjectChart } from "@/components/dashboard/hours-by-subject-chart";
 import { QuestionsPerformanceTable } from "@/components/dashboard/questions-performance-table";
@@ -23,6 +24,8 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">Visão geral do seu progresso.</p>
       </div>
+
+      <ImportLocalDataBanner />
 
       <StatCards sessions={sessions} />
 

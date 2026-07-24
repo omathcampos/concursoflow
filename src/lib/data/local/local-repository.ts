@@ -1,6 +1,9 @@
 import type { BlockRepo, CrudRepo, CycleRepo, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
 import type { LocalState } from "@/lib/data/local/store";
 
+// As ações do Zustand store são síncronas por natureza (localStorage), mas o
+// Repository exige mutações async (ver repository.ts) — aqui só embrulhamos
+// o resultado síncrono numa Promise já resolvida, sem I/O real.
 function makeCrudRepo<T extends { id: string }, Managed extends keyof T>(
   items: () => T[],
   actions: {
@@ -12,9 +15,9 @@ function makeCrudRepo<T extends { id: string }, Managed extends keyof T>(
   return {
     list: () => items(),
     get: (id) => items().find((item) => item.id === id),
-    create: actions.create,
-    update: actions.update,
-    remove: actions.remove,
+    create: async (input) => actions.create(input),
+    update: async (id, patch) => actions.update(id, patch),
+    remove: async (id) => actions.remove(id),
   };
 }
 
@@ -37,8 +40,8 @@ export function createLocalRepository(state: LocalState): Repository {
             .reduce((sum, session) => sum + session.durationMin, 0),
         }));
     },
-    setup: state.setupCycle,
-    startNewRound: state.startNewRound,
+    setup: async (name, entries) => state.setupCycle(name, entries),
+    startNewRound: async (cycleId) => state.startNewRound(cycleId),
   };
 
   return {
@@ -64,8 +67,8 @@ export function createLocalRepository(state: LocalState): Repository {
         update: state.updateBlock,
         remove: state.removeBlock,
       }),
-      createSeries: state.createBlockSeries,
-      removeSeries: state.removeBlockSeries,
+      createSeries: async (input, weeksCount) => state.createBlockSeries(input, weeksCount),
+      removeSeries: async (id, scope) => state.removeBlockSeries(id, scope),
     } satisfies BlockRepo,
     sessions: makeCrudRepo(() => state.sessions, {
       create: state.createSession,
@@ -78,12 +81,12 @@ export function createLocalRepository(state: LocalState): Repository {
         update: state.updateReview,
         remove: state.removeReview,
       }),
-      complete: state.completeReview,
-      skip: state.skipReview,
+      complete: async (id) => state.completeReview(id),
+      skip: async (id) => state.skipReview(id),
     } satisfies ReviewRepo,
     profile: {
       get: () => state.profile,
-      update: state.updateProfile,
+      update: async (patch) => state.updateProfile(patch),
     } satisfies ProfileRepo,
   };
 }

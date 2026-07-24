@@ -30,9 +30,10 @@ function AnotacoesContent() {
   useEffect(() => {
     if (!novaPara || handledNovaPara.current) return;
     handledNovaPara.current = true;
-    const created = repo.annotations.create({ title: "", content: "", subjectId: novaPara, topicId: null });
-    setSelectedId(created.id);
-    window.history.replaceState(null, "", "/anotacoes");
+    repo.annotations.create({ title: "", content: "", subjectId: novaPara, topicId: null }).then((created) => {
+      setSelectedId(created.id);
+      window.history.replaceState(null, "", "/anotacoes");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [novaPara]);
 
@@ -45,13 +46,13 @@ function AnotacoesContent() {
 
   const selected = selectedId ? repo.annotations.get(selectedId) : undefined;
 
-  function handleCreate() {
-    const created = repo.annotations.create({ title: "", content: "", subjectId: null, topicId: null });
+  async function handleCreate() {
+    const created = await repo.annotations.create({ title: "", content: "", subjectId: null, topicId: null });
     setSelectedId(created.id);
   }
 
-  function handleDelete(id: string) {
-    repo.annotations.remove(id);
+  async function handleDelete(id: string) {
+    await repo.annotations.remove(id);
     setSelectedId(null);
   }
 

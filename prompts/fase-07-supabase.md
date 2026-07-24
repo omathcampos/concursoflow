@@ -24,7 +24,7 @@ Criar o projeto Supabase, aplicar o schema e implementar `SupabaseRepository` co
 4. **SupabaseRepository** (`lib/data/supabase/repository.ts`): implementar TODA a interface `Repository`. Mapear snake_case ↔ camelCase num só lugar (`mappers.ts`). Gerar types com `supabase gen types typescript` (ou tool MCP) para tipar as queries.
 5. **Troca de implementação**: provider decide por env `NEXT_PUBLIC_DATA_SOURCE=local|supabase`. Default `supabase`; `local` continua funcionando como fallback/offline.
 6. **Migração de dados**: página/dialog "Importar meus dados locais" — lê o localStorage e insere tudo no Supabase (na ordem: subjects → topics → cycles → cycle_entries → blocks → sessions → reviews, remapeando ids; a tabela `annotations` do schema só ganha UI na fase 11). Idempotente (avisar se já há dados no servidor).
-7. **UX de rede**: estados de loading (skeletons) nas listas/calendário e toasts de erro nas mutações (o Repository agora é async de verdade — a interface já devia ser async desde a fase 2; se não for, ajustar agora).
+7. **UX de rede**: skeleton de boot (login do usuário técnico + hidratação do cache) até o primeiro carregamento ficar pronto, refetch no `focus` da janela, e toasts de erro nas mutações. Decisão de arquitetura (ver `CLAUDE.md`): `list()`/`get()` continuam **síncronos** — leem de um cache reativo Zustand hidratado do Supabase, nunca stale após uma mutação — para não exigir reescrever a leitura de dados em toda página já pronta; só `create`/`update`/`remove`/etc. viram `Promise` (I/O real).
 
 ## Testes (TDD)
 - **Antes de implementar**: testes Vitest dos `mappers.ts` (snake_case ↔ camelCase, campos null, ida-e-volta sem perda).
