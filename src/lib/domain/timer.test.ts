@@ -63,4 +63,12 @@ describe("timer", () => {
     const muchLater = new Date(t0.getTime() + 999_000);
     expect(stopTimer(timer, muchLater).durationMin).toBe(2);
   });
+
+  it("pause em timer que não está rodando (idle) não tem efeito", () => {
+    expect(pauseTimer(IDLE_TIMER)).toBe(IDLE_TIMER);
+  });
+
+  it("resume em timer que não está pausado (idle) não tem efeito", () => {
+    expect(resumeTimer(IDLE_TIMER)).toBe(IDLE_TIMER);
+  });
 });

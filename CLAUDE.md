@@ -1,13 +1,14 @@
 # CLAUDE.md
 
 ## Visão em 3 linhas
-ConcursoFlow é um app de cronograma de estudos para concursos públicos (calendário, ciclo de estudos, sessões, revisões espaçadas, dashboard). Stack: Next.js 16 (App Router, Turbopack) + TypeScript strict + Tailwind v4 + shadcn/ui (Base UI) + Zustand (local-first e cache do Supabase) + Supabase (banco real desde a fase 7). Estado atual: **Fases 0–7 concluídas e mergeadas; Fase 8 (Autenticação) em revisão.**
+ConcursoFlow é um app de cronograma de estudos para concursos públicos (calendário, ciclo de estudos, sessões, revisões espaçadas, dashboard). Stack: Next.js 16 (App Router, Turbopack) + TypeScript strict + Tailwind v4 + shadcn/ui (Base UI) + Zustand (local-first e cache do Supabase) + Supabase (banco real desde a fase 7). Estado atual: **v1.0.0 publicado em produção (Vercel); Fases 0–8 concluídas; Fase 9 (Polimento + deploy) em revisão.**
 
 ## Comandos
 - `npm run dev` — dev server (Turbopack)
 - `npm run lint` — ESLint
 - `npx tsc --noEmit` — type check
 - `npm run test` / `npm run test:watch` — Vitest (unit, `lib/domain/*`)
+- `npx vitest run --coverage` — cobertura (escopo: `src/lib/domain/**`, alvo 100%)
 - `npm run e2e` — Playwright (`e2e/fase-XX-*.spec.ts`)
 - `npm run build` — build de produção
 
@@ -37,6 +38,6 @@ Branch `feature/fase-XX-nome` a partir de `develop` → PR → CI verde → merg
 Prompts de cada fase em `prompts/fase-XX-*.md` (fonte de referência: pasta `cronograma/` fora do repo — resincronizar aqui quando houver novidades). Cada fase tem critérios de aceite que devem TODOS passar antes do PR, e a suíte e2e das fases anteriores precisa continuar verde (regressões intencionais são esperadas e documentadas no PR quando um comportamento muda de propósito).
 
 ## Estado do projeto
-Fases 0–7 concluídas e mergeadas em `develop`. Fase 8 (Autenticação — cadastro/login/logout via Supabase Auth, middleware de rotas protegidas, RLS por usuário real, onboarding) implementada, aguardando CI/merge. Fases 9+ (Polimento, Notificações, Melhorias) ainda não iniciadas.
+Fases 0–8 concluídas e mergeadas. `v1.0.0` publicado em `master` e no ar na Vercel (produção = `master`, previews = PRs) — https://concursoflow-alpha.vercel.app. Fase 9 (Polimento: revisão visual/responsiva, estados vazios/404/error boundary, PWA leve, cobertura 100% em `lib/domain/`, deploy) implementada, aguardando CI/merge. `src/middleware.ts` foi renomeado para `src/proxy.ts` (convenção do Next.js 16 — o export também virou `proxy`, não `middleware`). Fases 10+ (Notificações, Melhorias) ainda não iniciadas; próximos releases devem ser bumps minor (v1.1.0...), não major.
 
 *(Atualizar esta seção ao final de cada fase — é a primeira coisa que uma nova sessão do Claude Code deve conferir.)*

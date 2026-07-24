@@ -153,6 +153,13 @@ describe("accuracyLast30Days", () => {
   it("retorna null para lista vazia", () => {
     expect(accuracyLast30Days([], NOW)).toBeNull();
   });
+
+  it("trata questionsCorrect null (mas com questões registradas) como 0 acertos", () => {
+    const sessions = [
+      makeSession({ startedAt: new Date("2026-07-20T08:00:00").toISOString(), questionsTotal: 10, questionsCorrect: null }),
+    ];
+    expect(accuracyLast30Days(sessions, NOW)).toBe(0);
+  });
 });
 
 describe("computeStreak", () => {
@@ -217,6 +224,13 @@ describe("hoursByDayLast14", () => {
     expect(result[13].s1).toBe(1);
     expect(result[0].s1).toBe(0);
   });
+
+  it("ignora sessões de matéria que não está mais na lista (excluída)", () => {
+    const subjects = [makeSubject({ id: "s1" })];
+    const sessions = [makeSession({ subjectId: "matéria-excluída", startedAt: NOW.toISOString(), durationMin: 60 })];
+    const result = hoursByDayLast14(sessions, subjects, NOW);
+    expect(result[13].s1).toBe(0);
+  });
 });
 
 describe("weeklyEvolution", () => {
@@ -236,6 +250,14 @@ describe("weeklyEvolution", () => {
     expect(lastWeek.accuracy).toBe(80);
     expect(result[0].hours).toBe(0);
     expect(result[0].accuracy).toBeNull();
+  });
+
+  it("trata questionsCorrect null (mas com questões registradas) como 0 acertos", () => {
+    const sessions = [
+      makeSession({ startedAt: new Date("2026-07-20T08:00:00").toISOString(), questionsTotal: 10, questionsCorrect: null }),
+    ];
+    const result = weeklyEvolution(sessions, 12, NOW);
+    expect(result[11].accuracy).toBe(0);
   });
 });
 
@@ -278,6 +300,12 @@ describe("questionsPerformanceBySubject", () => {
     const sessions = [makeSession({ subjectId: "s1", type: "teoria" })];
     expect(questionsPerformanceBySubject(sessions, subjects)).toEqual([]);
   });
+
+  it("trata questionsCorrect null (mas questionsTotal preenchido) como 0 acertos", () => {
+    const sessions = [makeSession({ subjectId: "s1", questionsTotal: 10, questionsCorrect: null })];
+    const result = questionsPerformanceBySubject(sessions, subjects);
+    expect(result[0]).toMatchObject({ subjectId: "s1", total: 10, correct: 0, percent: 0, bucket: "red" });
+  });
 });
 
 describe("topOverdueSubjects", () => {
@@ -299,5 +327,16 @@ describe("topOverdueSubjects", () => {
 
   it("retorna [] quando não há atrasadas", () => {
     expect(topOverdueSubjects([], subjects, NOW, 3)).toEqual([]);
+  });
+
+  it("em empate de dias de atraso, desempata por quantidade de revisões atrasadas", () => {
+    const reviews = [
+      makeReview({ subjectId: "s1", dueDate: "2026-07-10", status: "pending" }), // 14 dias, 1 revisão
+      makeReview({ subjectId: "s2", dueDate: "2026-07-10", status: "pending" }), // 14 dias, revisão 1
+      makeReview({ subjectId: "s2", dueDate: "2026-07-15", status: "pending" }), // 14 dias, revisão 2
+    ];
+    const result = topOverdueSubjects(reviews, subjects, NOW, 3);
+    expect(result[0]).toMatchObject({ subjectId: "s2", count: 2, maxDaysLate: 14 });
+    expect(result[1]).toMatchObject({ subjectId: "s1", count: 1, maxDaysLate: 14 });
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
+import { countReviewsDueToday, nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
 import type { Review } from "@/lib/data/types";
 
 function makeReview(overrides: Partial<Review>): Review {
@@ -71,5 +71,36 @@ describe("nextReviewStep", () => {
     expect(next!.topicId).toBe("topic-y");
     expect(next!.sessionId).toBe("sess-z");
     expect(next!.status).toBe("pending");
+  });
+});
+
+describe("countReviewsDueToday", () => {
+  const today = new Date("2026-03-10T09:00:00");
+
+  it("conta revisões pendentes com vencimento hoje", () => {
+    const reviews = [makeReview({ dueDate: "2026-03-10", status: "pending" })];
+    expect(countReviewsDueToday(reviews, today)).toBe(1);
+  });
+
+  it("conta revisões pendentes atrasadas (vencimento antes de hoje)", () => {
+    const reviews = [makeReview({ dueDate: "2026-03-05", status: "pending" })];
+    expect(countReviewsDueToday(reviews, today)).toBe(1);
+  });
+
+  it("não conta revisões pendentes com vencimento futuro", () => {
+    const reviews = [makeReview({ dueDate: "2026-03-11", status: "pending" })];
+    expect(countReviewsDueToday(reviews, today)).toBe(0);
+  });
+
+  it("não conta revisões concluídas ou puladas, mesmo vencidas", () => {
+    const reviews = [
+      makeReview({ dueDate: "2026-03-05", status: "done" }),
+      makeReview({ dueDate: "2026-03-05", status: "skipped" }),
+    ];
+    expect(countReviewsDueToday(reviews, today)).toBe(0);
+  });
+
+  it("retorna 0 para lista vazia", () => {
+    expect(countReviewsDueToday([], today)).toBe(0);
   });
 });
