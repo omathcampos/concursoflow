@@ -6,6 +6,7 @@ import { Flame, LayoutDashboard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRepo } from "@/lib/data/use-repo";
+import { countReviewsDueToday } from "@/lib/domain/reviews";
 
 function hoursLabel(minutes: number): string {
   return `${(minutes / 60).toFixed(1)}h`;
@@ -24,6 +25,8 @@ export default function DashboardPage() {
     .filter((session) => isSameWeek(new Date(session.startedAt), now, { weekStartsOn: 1 }))
     .reduce((sum, session) => sum + session.durationMin, 0);
 
+  const reviewsToday = countReviewsDueToday(repo.reviews.list());
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -31,7 +34,7 @@ export default function DashboardPage() {
         <p className="mt-1 text-muted-foreground">Visão geral do seu progresso.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">Horas hoje</CardTitle>
@@ -46,6 +49,14 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold">{hoursLabel(minutesWeek)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">Revisões hoje</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{reviewsToday}</p>
           </CardContent>
         </Card>
       </div>

@@ -3,6 +3,7 @@
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { EventBlock } from "@/components/calendar/event-block";
@@ -17,7 +18,7 @@ import {
   topForDate,
   weekDays,
 } from "@/lib/calendar";
-import type { Block, Subject } from "@/lib/data/types";
+import type { Block, Review, Subject } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
 
 const HOUR_MARKS = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR }, (_, i) => DAY_START_HOUR + i);
@@ -25,14 +26,28 @@ const HOUR_MARKS = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR }, (_, i) 
 interface WeekGridProps {
   weekStart: Date;
   blocks: Block[];
+  reviews: Review[];
   subjectsById: Map<string, Subject>;
   onCreateAt: (date: Date) => void;
   onOpenBlock: (block: Block) => void;
   onMoveBlock: (block: Block, nextStartAt: Date, nextEndAt: Date) => void;
   onResizeBlock: (block: Block, nextEndAt: Date) => void;
+  onCompleteReview: (review: Review) => void;
+  onSkipReview: (review: Review) => void;
 }
 
-export function WeekGrid({ weekStart, blocks, subjectsById, onCreateAt, onOpenBlock, onMoveBlock, onResizeBlock }: WeekGridProps) {
+export function WeekGrid({
+  weekStart,
+  blocks,
+  reviews,
+  subjectsById,
+  onCreateAt,
+  onOpenBlock,
+  onMoveBlock,
+  onResizeBlock,
+  onCompleteReview,
+  onSkipReview,
+}: WeekGridProps) {
   const days = weekDays(weekStart);
   const gridRef = useRef<HTMLDivElement>(null);
   const [now, setNow] = useState(() => new Date());
@@ -98,6 +113,7 @@ export function WeekGrid({ weekStart, blocks, subjectsById, onCreateAt, onOpenBl
           {days.map((day) => {
             const isToday = isSameDay(day, now);
             const dayBlocks = blocks.filter((block) => isSameDay(new Date(block.startAt), day));
+            const dayReviews = reviews.filter((review) => review.status === "pending" && isSameDay(new Date(`${review.dueDate}T00:00:00`), day));
 
             return (
               <div key={day.toISOString()} className="border-r border-border last:border-r-0">
@@ -110,6 +126,42 @@ export function WeekGrid({ weekStart, blocks, subjectsById, onCreateAt, onOpenBl
                   <span className="capitalize">{format(day, "EEE", { locale: ptBR })}</span>
                   <span className="text-xs text-muted-foreground">{format(day, "dd/MM")}</span>
                 </div>
+
+                {dayReviews.length > 0 ? (
+                  <div
+                    data-testid={`review-strip-${format(day, "yyyy-MM-dd")}`}
+                    className="flex flex-wrap gap-1 border-b border-border bg-muted/30 p-1.5"
+                  >
+                    {dayReviews.map((review) => {
+                      const subject = subjectsById.get(review.subjectId);
+                      if (!subject) return null;
+                      return (
+                        <span
+                          key={review.id}
+                          className="flex items-center gap-1 rounded-full border border-border bg-background py-0.5 pl-2 pr-1 text-[11px]"
+                        >
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: subject.color }} aria-hidden />
+                          <button
+                            type="button"
+                            onClick={() => onCompleteReview(review)}
+                            className="max-w-20 truncate text-left hover:underline"
+                            title={`Revisar ${subject.name}`}
+                          >
+                            {subject.name}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSkipReview(review)}
+                            aria-label={`Pular revisão de ${subject.name}`}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : null}
 
                 <div
                   onClick={(e) => handleColumnClick(day, e)}

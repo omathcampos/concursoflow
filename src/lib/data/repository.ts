@@ -1,4 +1,4 @@
-import type { Annotation, Block, Cycle, CycleEntry, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 export interface CrudRepo<T, Managed extends keyof T> {
   list(): T[];
@@ -30,6 +30,13 @@ export interface BlockRepo extends CrudRepo<Block, "id" | "createdAt"> {
   removeSeries(id: string, scope: DeleteScope): void;
 }
 
+export interface ReviewRepo extends CrudRepo<Review, "id" | "createdAt"> {
+  /** Marca concluída e agenda a próxima do ciclo (D+7/D+30), se houver. */
+  complete(id: string): void;
+  /** Marca pulada — não agenda a próxima. */
+  skip(id: string): void;
+}
+
 export interface Repository {
   subjects: CrudRepo<Subject, "id" | "createdAt">;
   topics: CrudRepo<Topic, "id" | "createdAt">;
@@ -37,4 +44,5 @@ export interface Repository {
   cycle: CycleRepo;
   blocks: BlockRepo;
   sessions: CrudRepo<Session, "id" | "createdAt">;
+  reviews: ReviewRepo;
 }
