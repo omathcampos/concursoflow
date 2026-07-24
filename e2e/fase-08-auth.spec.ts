@@ -56,7 +56,8 @@ async function createSubject(page: Page, name: string) {
   await page.getByRole("button", { name: "Nova matéria" }).first().click();
   await page.getByLabel("Nome").fill(name);
   await page.getByRole("button", { name: "Criar matéria" }).click();
-  await expect(page.getByRole("heading", { name, level: 3 })).toBeVisible();
+  // Round-trip real contra o Supabase (não local) — dá mais folga que o timeout padrão.
+  await expect(page.getByRole("heading", { name, level: 3 })).toBeVisible({ timeout: 15_000 });
 }
 
 const userAEmail = process.env.E2E_USER_A_EMAIL;
@@ -77,6 +78,35 @@ test.describe("login, logout e isolamento entre usuários", () => {
 
     await page.goto("/materias");
     await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("menu do usuário: iniciais, submenu de tema e /perfil salvando com feedback", async ({ page }) => {
+    await login(page, userAEmail!, userAPassword!);
+
+    const menuTrigger = page.getByRole("button", { name: "Menu do usuário" });
+    await menuTrigger.click();
+    await expect(page.getByText(userAEmail!)).toBeVisible();
+
+    await page.getByRole("menuitem", { name: "Tema" }).click();
+    await page.getByRole("menuitem", { name: "Escuro" }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/);
+
+    await menuTrigger.click();
+    await page.getByRole("menuitem", { name: "Perfil" }).click();
+    await expect(page).toHaveURL(/\/perfil$/);
+
+    const uniqueName = `QA Menu ${Date.now()}`;
+    await page.getByLabel("Nome de exibição").fill(uniqueName);
+    await page.getByRole("button", { name: "Salvar" }).click();
+    await expect(page.getByText("Perfil atualizado.")).toBeVisible({ timeout: 10_000 });
+
+    const initials = uniqueName
+      .split(" ")
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase();
+    await expect(menuTrigger.getByText(initials, { exact: true })).toBeVisible();
   });
 
   test("dados de um usuário não aparecem para o outro (RLS)", async ({ browser }) => {

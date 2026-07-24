@@ -15,7 +15,12 @@ Cadastro, login e isolamento de dados por usuário via Supabase Auth.
    - `/recuperar-senha` + rota de callback para redefinição.
 2. **Middleware** (`middleware.ts` com `@supabase/ssr`): rotas do app exigem sessão → redirect `/login`; `/login` e `/cadastro` com sessão ativa → redirect `/`.
 3. **Repository**: remover `DEV_USER_ID` e o login programático da fase 7; `user_id` vem de `auth.getUser()`. O trigger `handle_new_user` do schema já cria o profile no signup.
-4. **Header**: menu do usuário (avatar com iniciais) → Perfil, Sair. Página/dialog de perfil: nome de exibição, concurso-alvo, data da prova (o countdown da fase 6 passa a ler do profile no Supabase).
+4. **Header — menu do usuário** (shadcn DropdownMenu):
+   - Trigger: avatar circular com as iniciais do nome (fallback: 1ª letra do email), fundo na cor primária, hover sutil.
+   - Topo do dropdown: nome de exibição + email logado (texto menor, muted) — não clicável.
+   - Itens: **Perfil** (ícone user), **Tema** (submenu Claro/Escuro/Sistema com check no ativo — substitui o toggle solto do header), **Notificações** (ícone bell; até a fase 10 existir, leva ao perfil com toast "em breve"; na fase 10, abre as preferências), separador, **Sair** (ícone log-out, texto em destructive, com confirmação leve ou logout direto + redirect para /login com toast "até logo").
+   - Acessível por teclado (padrão shadcn) e funcional no mobile.
+   - **Página de perfil** (`/perfil`, protegida): avatar grande com iniciais, nome de exibição (editável), email (read-only), concurso-alvo, data da prova (date picker — o countdown do header lê daqui via profile no Supabase), botão salvar com toast de sucesso. Seção "Conta": botão sair. Placeholder da seção "Notificações" (fase 10).
 5. **Onboarding**: usuário novo sem dados → tela de boas-vindas com CTA "criar minha primeira matéria" (e opção de carregar dados de exemplo).
 6. **Verificações de segurança**: confirmar RLS ativo em todas as tabelas testando com dois usuários (dados de A invisíveis para B). Rodar advisors do Supabase e corrigir alertas.
 
@@ -29,6 +34,7 @@ Cadastro, login e isolamento de dados por usuário via Supabase Auth.
 - [ ] Dois usuários têm dados completamente isolados (testar de verdade com 2 contas).
 - [ ] Recuperação de senha por email funciona.
 - [ ] Countdown da prova lê do profile.
+- [ ] Menu do usuário: avatar com iniciais, nome+email no topo, submenu de tema com check no ativo, sair funciona com redirect; página /perfil salva alterações com feedback.
 - [ ] Advisors do Supabase sem alertas críticos.
 - [ ] `npm run lint`, `npx tsc --noEmit`, `npm run test` e `npm run e2e` limpos antes do PR.
 

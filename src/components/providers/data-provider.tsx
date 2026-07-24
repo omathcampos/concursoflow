@@ -36,6 +36,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const status = useSupabaseCache((s) => s.status);
   const cacheError = useSupabaseCache((s) => s.error);
   const setUserId = useSupabaseCache((s) => s.setUserId);
+  const setUserEmail = useSupabaseCache((s) => s.setUserEmail);
   const setStatus = useSupabaseCache((s) => s.setStatus);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -71,6 +72,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUserId(user.id);
+      setUserEmail(user.email ?? null);
       await hydrateFor(user.id);
     }
 
@@ -81,11 +83,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     } = client.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         setUserId(null);
+        setUserEmail(null);
         setStatus("idle");
         return;
       }
       if (event === "SIGNED_IN" && session?.user) {
         setUserId(session.user.id);
+        setUserEmail(session.user.email ?? null);
         hydrateFor(session.user.id);
       }
     });
