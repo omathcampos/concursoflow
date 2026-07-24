@@ -3,7 +3,7 @@
 ## Contexto
 Fases 0–9 concluídas: app em produção com Supabase + Auth. Leia `docs/02-arquitetura.md`. Canais: **email via Resend** e **Telegram bot**. Infra: **pg_cron** agenda → **Edge Functions** montam o conteúdo (uma vez) → enviam pelos canais habilitados do usuário. A montagem do conteúdo é compartilhada; cada canal é só um "sender" (`senders/email.ts`, `senders/telegram.ts`).
 
-> ⚠️ Todas as operações Supabase usam **exclusivamente a ref do projeto criado na fase 7**. Não tocar em `bjglagkkodzlzlbnpwgp`, `pzxwxrxocksfknvqcmnu`, `yvjjatlindmruqmlmqpg`. Confirmar a ref com o usuário antes da primeira operação.
+> ⚠️ Todas as operações Supabase usam **exclusivamente a ref `apceuvnqnrxfoongjvxq`** (projeto ConcursoFlow). Não tocar em `bjglagkkodzlzlbnpwgp`, `pzxwxrxocksfknvqcmnu`, `yvjjatlindmruqmlmqpg`. Confirmar a ref com o usuário antes da primeira operação.
 
 ## Objetivo
 Três envios automáticos — lembrete diário de manhã, relatório semanal e alerta de revisões atrasadas — por email e/ou Telegram, com preferências por usuário e opt-out.

@@ -6,7 +6,7 @@ Fases 1–7 concluídas: app rodando sobre Supabase com usuário técnico fixo. 
 ## Objetivo
 Cadastro, login e isolamento de dados por usuário via Supabase Auth.
 
-> ⚠️ Todas as operações Supabase desta fase usam **exclusivamente a ref do projeto criado na fase 7** (ver anotação em `fase-07-supabase.md`). Os projetos `bjglagkkodzlzlbnpwgp`, `pzxwxrxocksfknvqcmnu` e `yvjjatlindmruqmlmqpg` são de outros sistemas — não tocar. Confirmar a ref com o usuário antes da primeira operação.
+> ⚠️ Todas as operações Supabase desta fase usam **exclusivamente a ref `apceuvnqnrxfoongjvxq`** (projeto ConcursoFlow, criado na fase 7). Os projetos `bjglagkkodzlzlbnpwgp`, `pzxwxrxocksfknvqcmnu` e `yvjjatlindmruqmlmqpg` são de outros sistemas — não tocar. Confirmar a ref com o usuário antes da primeira operação.
 
 ## Tarefas
 1. **Páginas** no route group `(auth)` com layout próprio (centrado, card, logo):
