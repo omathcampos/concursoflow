@@ -29,8 +29,7 @@ export function useRepo(): Repository {
   // positivos do compiler com objetos retornados por hooks customizados).
   return useMemo(() => {
     if (dataSource === "local") return createLocalRepository(localState);
-    return createSupabaseRepository(getSupabaseBrowserClient(), process.env.NEXT_PUBLIC_DEV_USER_ID!);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return createSupabaseRepository(getSupabaseBrowserClient(), cacheState.userId ?? "");
   }, [dataSource, localState, cacheState]);
 }
 
@@ -42,11 +41,12 @@ export function useIsSeeded(): boolean {
 
 export function useLoadSeed(): () => void | Promise<void> {
   const loadLocalSeed = useLocalStore((s) => s.loadSeed);
+  const userId = useSupabaseCache((s) => s.userId);
 
   if (getDataSource() === "local") return loadLocalSeed;
 
   return async () => {
-    const repo = createSupabaseRepository(getSupabaseBrowserClient(), process.env.NEXT_PUBLIC_DEV_USER_ID!);
+    const repo = createSupabaseRepository(getSupabaseBrowserClient(), userId ?? "");
     const createdSubjects = await Promise.all(
       SEED_SUBJECTS.map(async ({ name, color, weight, topics }) => {
         const subject = await repo.subjects.create({ name, color, weight, notes: null });

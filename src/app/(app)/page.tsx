@@ -1,6 +1,7 @@
 "use client";
 
 import { ImportLocalDataBanner } from "@/components/data/import-local-data-banner";
+import { WelcomeOnboarding } from "@/components/data/welcome-onboarding";
 import { HoursByDayChart } from "@/components/dashboard/hours-by-day-chart";
 import { HoursBySubjectChart } from "@/components/dashboard/hours-by-subject-chart";
 import { QuestionsPerformanceTable } from "@/components/dashboard/questions-performance-table";
@@ -26,6 +27,7 @@ export default function DashboardPage() {
       </div>
 
       <ImportLocalDataBanner />
+      <WelcomeOnboarding />
 
       <StatCards sessions={sessions} />
 
