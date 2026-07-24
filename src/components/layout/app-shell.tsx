@@ -10,7 +10,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        {/* pb extra: reserva espaço pro TimerWidget flutuante (fixed bottom-4) não cobrir o fim do conteúdo. */}
+        <main className="flex-1 overflow-y-auto p-4 pb-24 sm:p-6 sm:pb-24">{children}</main>
       </div>
       <TimerWidget />
     </div>

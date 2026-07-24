@@ -23,6 +23,11 @@ import { useRepo } from "@/lib/data/use-repo";
 import { detectOverlap } from "@/lib/domain/blocks";
 import type { SessionFormData } from "@/lib/domain/session-validation";
 
+// A semana/dia iniciais vêm de `new Date()` — sem isso, o Next pré-renderiza
+// a página como estática e "congela" a data no momento do build, causando
+// hydration mismatch no header (semana errada) até o cliente corrigir.
+export const dynamic = "force-dynamic";
+
 const RECURRING_WEEKS = 8;
 
 function combineDateTime(date: string, time: string): Date {

@@ -99,5 +99,5 @@ test("cria anotação vinculada a matéria, busca por texto e visualiza preview 
   await expect(page.getByRole("button", { name: /Prescrição/ })).toBeVisible();
 
   await page.getByPlaceholder("Buscar anotações...").fill("não existe nenhuma anotação com isso");
-  await expect(page.getByText("Nenhuma anotação encontrada.")).toBeVisible();
+  await expect(page.getByText("Nenhuma anotação encontrada para essa busca.")).toBeVisible();
 });

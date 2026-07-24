@@ -9,7 +9,7 @@ import { resolveAuthRedirect } from "@/lib/auth/route-guard";
  * (CI/e2e das fases 1-6, RNF03 "funciona offline") passa direto — não há
  * usuário para exigir, e essa é a suíte que roda sem credenciais.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (getDataSource() !== "supabase") return NextResponse.next();
 
   let response = NextResponse.next({ request });
@@ -42,5 +42,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest)$).*)"],
 };

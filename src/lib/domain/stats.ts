@@ -54,7 +54,8 @@ export function accuracyLast30Days(sessions: Session[], now: Date = new Date()):
   const relevant = sessions.filter(
     (session) => new Date(session.startedAt) >= start && session.questionsTotal != null && session.questionsTotal > 0,
   );
-  const total = relevant.reduce((sum, session) => sum + (session.questionsTotal ?? 0), 0);
+  // questionsTotal nunca é null aqui — já garantido pelo filtro de `relevant`.
+  const total = relevant.reduce((sum, session) => sum + session.questionsTotal!, 0);
   const correct = relevant.reduce((sum, session) => sum + (session.questionsCorrect ?? 0), 0);
   if (total === 0) return null;
   return Math.round((correct / total) * 100);
@@ -143,7 +144,8 @@ export function weeklyEvolution(sessions: Session[], weeksCount = 12, now: Date 
 
     const minutes = inWeek.reduce((sum, session) => sum + session.durationMin, 0);
     const withQuestions = inWeek.filter((session) => session.questionsTotal != null && session.questionsTotal > 0);
-    const total = withQuestions.reduce((sum, session) => sum + (session.questionsTotal ?? 0), 0);
+    // questionsTotal nunca é null aqui — já garantido pelo filtro acima.
+    const total = withQuestions.reduce((sum, session) => sum + session.questionsTotal!, 0);
     const correct = withQuestions.reduce((sum, session) => sum + (session.questionsCorrect ?? 0), 0);
 
     return {
