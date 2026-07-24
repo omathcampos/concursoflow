@@ -44,8 +44,10 @@ Conventional Commits:
 
 `master` e `develop` bloqueiam: push direto, force-push e deleção. Exigem PR, status checks do CI verdes e branch atualizada antes do merge.
 
-> Repositório privado em plano free do GitHub: se a API de branch protection recusar alguma regra, o ajuste é feito via *rulesets* (`gh api repos/{owner}/{repo}/rulesets` ou dashboard) — o que foi de fato aplicado fica registrado abaixo.
+> Branch protection clássica (`branches/{branch}/protection`) exige GitHub Pro ou repositório público em repositório privado no plano Free. Por isso o repositório é **público** e a proteção foi aplicada via **rulesets** (`gh api repos/{owner}/{repo}/rulesets`).
 
 ### Estado aplicado (Fase 0)
 
-- `master` e `develop`: push direto e force-push bloqueados, deleção bloqueada, PR obrigatório, CI (`ci`) obrigatório como status check.
+- Repositório público (necessário para rulesets no plano Free).
+- Rulesets `protect-master` e `protect-develop`: bloqueiam push direto (non-fast-forward) e deleção, exigem PR e o status check `ci` verde e atualizado (`strict_required_status_checks_policy: true`).
+- Aprovação de review não é exigida (projeto solo) — a obrigatoriedade é do PR + CI, não de um segundo revisor.
