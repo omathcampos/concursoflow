@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 
 import { generateWeeklyOccurrences } from "@/lib/domain/blocks";
 import { nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
+import { SEED_SUBJECTS } from "@/lib/domain/seed-data";
 import { IDLE_TIMER, pauseTimer, resumeTimer, startTimer, stopTimer, type TimerState } from "@/lib/domain/timer";
 import type { CycleSetupEntry, DeleteScope } from "@/lib/data/repository";
 import type { Annotation, Block, Cycle, CycleEntry, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
@@ -355,15 +356,7 @@ export const useLocalStore = create<LocalState>()(
       },
 
       loadSeed: () => {
-        const seedSubjects: Array<{ name: string; color: string; weight: number; topics: string[] }> = [
-          { name: "Português", color: "#8b5cf6", weight: 4, topics: ["Crase", "Concordância verbal", "Regência nominal"] },
-          { name: "Direito Constitucional", color: "#3b82f6", weight: 5, topics: ["Direitos fundamentais", "Organização do Estado"] },
-          { name: "Direito Administrativo", color: "#10b981", weight: 5, topics: ["Atos administrativos", "Licitações"] },
-          { name: "Raciocínio Lógico-Matemático", color: "#f59e0b", weight: 3, topics: ["Proposições", "Probabilidade"] },
-          { name: "Informática", color: "#ec4899", weight: 2, topics: ["Segurança da informação", "Planilhas"] },
-        ];
-
-        const createdSubjects = seedSubjects.map(({ name, color, weight, topics }) => {
+        const createdSubjects = SEED_SUBJECTS.map(({ name, color, weight, topics }) => {
           const subject = get().createSubject({ name, color, weight, notes: null });
           topics.forEach((topicName, position) => {
             get().createTopic({ subjectId: subject.id, name: topicName, status: "not_started", position, notes: null });

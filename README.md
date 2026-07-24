@@ -49,7 +49,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 4 — Sessões + cronômetro
 - [x] Fase 5 — Revisões espaçadas
 - [x] Fase 6 — Dashboard
-- [ ] Fase 7 — Supabase
+- [x] Fase 7 — Supabase
 - [ ] Fase 8 — Autenticação
 - [ ] Fase 9 — Polimento + deploy (v1.0.0)
 - [ ] Fase 10 — Notificações email + Telegram (v1.1.0): lembrete diário, relatório semanal, alerta de revisões atrasadas
