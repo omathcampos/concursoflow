@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { elapsedMs, IDLE_TIMER, pauseTimer, resumeTimer, startTimer, stopTimer } from "@/lib/domain/timer";
+import { elapsedMs, formatElapsed, IDLE_TIMER, pauseTimer, resumeTimer, startTimer, stopTimer } from "@/lib/domain/timer";
 
 describe("timer", () => {
   it("timer ocioso tem elapsed 0", () => {
@@ -70,5 +70,24 @@ describe("timer", () => {
 
   it("resume em timer que não está pausado (idle) não tem efeito", () => {
     expect(resumeTimer(IDLE_TIMER)).toBe(IDLE_TIMER);
+  });
+});
+
+describe("formatElapsed", () => {
+  it("formata segundos e minutos como mm:ss abaixo de 1 hora", () => {
+    expect(formatElapsed(0)).toBe("00:00");
+    expect(formatElapsed(5_000)).toBe("00:05");
+    expect(formatElapsed(90_000)).toBe("01:30");
+    expect(formatElapsed(3_599_000)).toBe("59:59");
+  });
+
+  it("inclui horas como h:mm:ss a partir de 1 hora", () => {
+    expect(formatElapsed(3_600_000)).toBe("1:00:00");
+    expect(formatElapsed(3_661_000)).toBe("1:01:01");
+    expect(formatElapsed(7_325_000)).toBe("2:02:05");
+  });
+
+  it("trunca milissegundos parciais (não arredonda pra cima)", () => {
+    expect(formatElapsed(1_999)).toBe("00:01");
   });
 });
