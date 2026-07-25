@@ -92,9 +92,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (event === "SIGNED_IN" && session?.user) {
+        // supabase-js reemite "SIGNED_IN" ao revalidar a sessão quando a aba
+        // volta a ficar visível — não é um login novo. Se já temos esse
+        // mesmo usuário no cache, trata como a revalidação silenciosa do
+        // onFocus (mesmo throttle); só refaz o boot completo (com tela de
+        // carregamento) quando é de fato outro usuário.
+        const currentUserId = useSupabaseCache.getState().userId;
+        const isSameUser = currentUserId === session.user.id;
+
         setUserId(session.user.id);
         setUserEmail(session.user.email ?? null);
-        hydrateFor(session.user.id);
+
+        if (isSameUser) {
+          const now = Date.now();
+          if (now - lastFocusRevalidateAtRef.current < FOCUS_REVALIDATE_THROTTLE_MS) return;
+          lastFocusRevalidateAtRef.current = now;
+          hydrateFor(session.user.id, { silent: true }).catch(() => {});
+        } else {
+          hydrateFor(session.user.id);
+        }
       }
     });
 
