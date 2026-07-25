@@ -1,9 +1,10 @@
 "use client";
 
-import { Pause, Play, Square, Timer as TimerIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Maximize2, Pause, Play, Square, Timer as TimerIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { SessionFormDialog } from "@/components/sessions/session-form-dialog";
+import { TimerFocusOverlay } from "@/components/sessions/timer-focus-overlay";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -13,19 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { elapsedMs } from "@/lib/domain/timer";
+import { elapsedMs, formatElapsed } from "@/lib/domain/timer";
 import type { SessionFormData } from "@/lib/domain/session-validation";
 import { useRepo, useTimer } from "@/lib/data/use-repo";
-
-function formatElapsed(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const mm = String(minutes).padStart(2, "0");
-  const ss = String(seconds).padStart(2, "0");
-  return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
-}
 
 export function TimerWidget() {
   const repo = useRepo();
@@ -36,6 +27,8 @@ export function TimerWidget() {
   const [stopResult, setStopResult] = useState<{ subjectId: string; startedAt: string; durationMin: number } | null>(
     null,
   );
+  const [focusMode, setFocusMode] = useState(false);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const subjects = repo.subjects.list();
   const topics = repo.topics.list();
@@ -55,8 +48,72 @@ export function TimerWidget() {
     document.title = `${formatElapsed(elapsedMs(timer, tick))} · ${activeSubject?.name ?? "Estudando"}`;
   }, [timer, tick, activeSubject]);
 
+  const releaseWakeLock = useCallback(() => {
+    wakeLockRef.current?.release().catch(() => {});
+    wakeLockRef.current = null;
+  }, []);
+
+  const requestWakeLock = useCallback(async () => {
+    if (!("wakeLock" in navigator)) return;
+    try {
+      wakeLockRef.current = await navigator.wakeLock.request("screen");
+    } catch {
+      // Sem wake lock (permissão negada, aba em segundo plano, etc.) — modo foco continua funcionando normalmente.
+    }
+  }, []);
+
+  const exitFocusMode = useCallback(() => {
+    setFocusMode(false);
+    releaseWakeLock();
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  }, [releaseWakeLock]);
+
+  async function enterFocusMode() {
+    setFocusMode(true);
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch {
+      // Fullscreen API indisponível/negada (ex.: iOS Safari) — overlay funciona mesmo assim, só sem o fullscreen nativo.
+    }
+    requestWakeLock();
+  }
+
+  // ESC sai do modo foco mesmo quando o Fullscreen API não entrou de fato (sem fullscreenchange pra pegar).
+  useEffect(() => {
+    if (!focusMode) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") exitFocusMode();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [focusMode, exitFocusMode]);
+
+  // Se o usuário sair da tela cheia pelo controle nativo do navegador, o overlay acompanha.
+  useEffect(() => {
+    function onFullscreenChange() {
+      if (!document.fullscreenElement) {
+        setFocusMode(false);
+        releaseWakeLock();
+      }
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, [releaseWakeLock]);
+
+  // Wake lock é liberado automaticamente quando a aba fica oculta — readquire ao voltar, se ainda em modo foco.
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (focusMode && document.visibilityState === "visible") requestWakeLock();
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [focusMode, requestWakeLock]);
+
+  useEffect(() => releaseWakeLock, [releaseWakeLock]);
+
   function handleStop() {
     const result = stop();
+    if (focusMode) exitFocusMode();
     if (result.subjectId && result.startedAt) {
       setStopResult({ subjectId: result.subjectId, startedAt: result.startedAt, durationMin: Math.max(1, result.durationMin) });
       setFormOpen(true);
@@ -74,6 +131,21 @@ export function TimerWidget() {
     });
     setFormOpen(false);
     setStopResult(null);
+  }
+
+  if (focusMode && timer.status !== "idle") {
+    return (
+      <TimerFocusOverlay
+        subjectName={activeSubject?.name ?? "Estudando"}
+        subjectColor={activeSubject?.color ?? "#8b5cf6"}
+        elapsedLabel={formatElapsed(elapsedMs(timer, tick))}
+        status={timer.status}
+        onPause={pause}
+        onResume={resume}
+        onStop={handleStop}
+        onExit={exitFocusMode}
+      />
+    );
   }
 
   return (
@@ -117,6 +189,9 @@ export function TimerWidget() {
             )}
             <Button size="icon-sm" variant="outline" onClick={handleStop} aria-label="Parar">
               <Square className="h-3.5 w-3.5" />
+            </Button>
+            <Button size="icon-sm" variant="outline" onClick={enterFocusMode} aria-label="Modo foco">
+              <Maximize2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </Card>
