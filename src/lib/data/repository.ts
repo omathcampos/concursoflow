@@ -1,4 +1,4 @@
-import type { Annotation, Block, Cycle, CycleEntry, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 // Leituras (list/get/entries/getActive) são síncronas: cada implementação de
 // Repository é responsável por manter um cache local sempre atualizado (o
@@ -48,6 +48,21 @@ export interface ProfileRepo {
   update(patch: Partial<Pick<Profile, "displayName" | "targetExam" | "examDate">>): Promise<Profile>;
 }
 
+export type NotificationTestResult = { skipped: string } | { email?: "sent"; telegram?: "sent" };
+
+export interface NotificationsRepo {
+  get(): NotificationPrefs | undefined;
+  update(
+    patch: Partial<Pick<NotificationPrefs, "dailyEnabled" | "dailyHour" | "weeklyEnabled" | "overdueEnabled" | "channelEmail" | "timezone">>,
+  ): Promise<NotificationPrefs>;
+  /** Gera código de uso único (10min) pro fluxo `/start CODIGO` do bot do Telegram. */
+  generateTelegramLinkCode(): Promise<{ code: string; expiresAt: string }>;
+  /** Confere se o vínculo já foi concluído (usuário clicou no link e mandou /start no bot) e atualiza o cache. */
+  refreshTelegramLink(): Promise<NotificationPrefs>;
+  unlinkTelegram(): Promise<void>;
+  sendTest(type: "daily" | "weekly" | "overdue"): Promise<NotificationTestResult>;
+}
+
 export interface Repository {
   subjects: CrudRepo<Subject, "id" | "createdAt">;
   topics: CrudRepo<Topic, "id" | "createdAt">;
@@ -57,4 +72,5 @@ export interface Repository {
   sessions: CrudRepo<Session, "id" | "createdAt">;
   reviews: ReviewRepo;
   profile: ProfileRepo;
+  notifications: NotificationsRepo;
 }

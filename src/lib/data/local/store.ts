@@ -6,7 +6,7 @@ import { nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
 import { SEED_SUBJECTS } from "@/lib/domain/seed-data";
 import { IDLE_TIMER, pauseTimer, resumeTimer, startTimer, stopTimer, type TimerState } from "@/lib/domain/timer";
 import type { CycleSetupEntry, DeleteScope } from "@/lib/data/repository";
-import type { Annotation, Block, Cycle, CycleEntry, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 function uid(): string {
   return crypto.randomUUID();
@@ -27,6 +27,7 @@ export interface LocalState {
   reviews: Review[];
   timer: TimerState;
   profile: Profile;
+  notificationPrefs: NotificationPrefs;
 
   createSubject: (input: Omit<Subject, "id" | "createdAt">) => Subject;
   updateSubject: (id: string, patch: Partial<Omit<Subject, "id" | "createdAt">>) => Subject;
@@ -61,6 +62,10 @@ export interface LocalState {
 
   updateProfile: (patch: Partial<Pick<Profile, "displayName" | "targetExam" | "examDate">>) => Profile;
 
+  updateNotificationPrefs: (
+    patch: Partial<Pick<NotificationPrefs, "dailyEnabled" | "dailyHour" | "weeklyEnabled" | "overdueEnabled" | "channelEmail" | "timezone">>,
+  ) => NotificationPrefs;
+
   startTimerFor: (subjectId: string) => void;
   pauseTimerNow: () => void;
   resumeTimerNow: () => void;
@@ -82,6 +87,18 @@ export const useLocalStore = create<LocalState>()(
       reviews: [],
       timer: IDLE_TIMER,
       profile: { id: "local", displayName: null, targetExam: null, examDate: null, createdAt: now() },
+      notificationPrefs: {
+        userId: "local",
+        dailyEnabled: true,
+        dailyHour: 7,
+        weeklyEnabled: true,
+        overdueEnabled: true,
+        channelEmail: true,
+        channelTelegram: false,
+        telegramChatId: null,
+        timezone: "America/Sao_Paulo",
+        unsubscribeToken: "local",
+      },
 
       createSubject: (input) => {
         const subject: Subject = { id: uid(), createdAt: now(), ...input };
@@ -340,6 +357,15 @@ export const useLocalStore = create<LocalState>()(
         set((state) => {
           updated = { ...state.profile, ...patch };
           return { profile: updated };
+        });
+        return updated!;
+      },
+
+      updateNotificationPrefs: (patch) => {
+        let updated: NotificationPrefs | undefined;
+        set((state) => {
+          updated = { ...state.notificationPrefs, ...patch };
+          return { notificationPrefs: updated };
         });
         return updated!;
       },

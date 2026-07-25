@@ -30,4 +30,9 @@ describe("resolveAuthRedirect", () => {
     expect(resolveAuthRedirect("/recuperar-senha", true)).toBeNull();
     expect(resolveAuthRedirect("/recuperar-senha/callback", true)).toBeNull();
   });
+
+  it("/unsubscribe nunca redireciona, com ou sem sessão (link vem de fora, do rodapé do email)", () => {
+    expect(resolveAuthRedirect("/unsubscribe", false)).toBeNull();
+    expect(resolveAuthRedirect("/unsubscribe", true)).toBeNull();
+  });
 });

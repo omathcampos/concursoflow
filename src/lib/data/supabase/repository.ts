@@ -7,6 +7,7 @@ import {
   fromBlockRow,
   fromCycleEntryRow,
   fromCycleRow,
+  fromNotificationPrefsRow,
   fromProfileRow,
   fromReviewRow,
   fromSessionRow,
@@ -16,6 +17,7 @@ import {
   toBlockRow,
   toCycleEntryRow,
   toCycleRow,
+  toNotificationPrefsRow,
   toProfileRow,
   toReviewRow,
   toSessionRow,
@@ -24,8 +26,15 @@ import {
 } from "@/lib/data/supabase/mappers";
 import { generateWeeklyOccurrences } from "@/lib/domain/blocks";
 import { nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
-import type { BlockRepo, CrudRepo, CycleRepo, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
+import type { BlockRepo, CrudRepo, CycleRepo, NotificationsRepo, NotificationTestResult, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
 import type { Annotation, Cycle, Profile, Session, Subject, Topic } from "@/lib/data/types";
+
+/** Código curto (sem caracteres ambíguos) pro fluxo `/start CODIGO` do bot do Telegram. */
+function generateLinkCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
 
 async function withErrorToast<T>(action: () => Promise<T>, message: string): Promise<T> {
   try {
@@ -401,5 +410,56 @@ export function createSupabaseRepository(client: SupabaseClient, userId: string)
       }, "Não foi possível salvar o perfil."),
   };
 
-  return { subjects, topics, annotations, cycle, blocks, sessions, reviews, profile };
+  const notifications: NotificationsRepo = {
+    get: () => cache().notificationPrefs,
+    update: (patch) =>
+      withErrorToast(async () => {
+        const { data, error } = await client.from("notification_prefs").update(toNotificationPrefsRow(patch)).eq("user_id", userId).select().single();
+        if (error) throw error;
+        const prefs = fromNotificationPrefsRow(data);
+        setCache({ notificationPrefs: prefs });
+        return prefs;
+      }, "Não foi possível salvar as preferências de notificação."),
+    generateTelegramLinkCode: () =>
+      withErrorToast(async () => {
+        const code = generateLinkCode();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+        const { error } = await client.from("telegram_link_codes").insert({ code, user_id: userId, expires_at: expiresAt });
+        if (error) throw error;
+        return { code, expiresAt };
+      }, "Não foi possível gerar o código de vínculo do Telegram."),
+    refreshTelegramLink: () =>
+      withErrorToast(async () => {
+        const { data, error } = await client.from("notification_prefs").select("*").eq("user_id", userId).single();
+        if (error) throw error;
+        const prefs = fromNotificationPrefsRow(data);
+        setCache({ notificationPrefs: prefs });
+        return prefs;
+      }, "Não foi possível checar o status do vínculo do Telegram."),
+    unlinkTelegram: () =>
+      withErrorToast(async () => {
+        const { data, error } = await client
+          .from("notification_prefs")
+          .update({ telegram_chat_id: null, channel_telegram: false })
+          .eq("user_id", userId)
+          .select()
+          .single();
+        if (error) throw error;
+        setCache({ notificationPrefs: fromNotificationPrefsRow(data) });
+      }, "Não foi possível desvincular o Telegram."),
+    sendTest: (type) =>
+      withErrorToast(async () => {
+        const { data: sessionData, error: sessionError } = await client.auth.getSession();
+        if (sessionError || !sessionData.session) throw sessionError ?? new Error("Sessão não encontrada.");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/${type}?test=true`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+        });
+        const result = (await res.json()) as NotificationTestResult;
+        if (!res.ok) throw new Error("Não foi possível enviar o teste.");
+        return result;
+      }, "Não foi possível enviar a notificação de teste."),
+  };
+
+  return { subjects, topics, annotations, cycle, blocks, sessions, reviews, profile, notifications };
 }

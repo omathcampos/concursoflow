@@ -1,7 +1,7 @@
 // Ponto único de conversão snake_case (linhas do Postgres) <-> camelCase (domínio TS).
 // Cada tabela tem um par toXRow/fromXRow. `user_id` é injetado aqui (nunca faz parte do domínio).
 
-import type { Annotation, Block, Cycle, CycleEntry, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 export interface SubjectRow {
   id: string;
@@ -264,4 +264,45 @@ export function toProfileRow(input: Partial<Pick<Profile, "displayName" | "targe
 
 export function fromProfileRow(row: ProfileRow): Profile {
   return { id: row.id, displayName: row.display_name, targetExam: row.target_exam, examDate: row.exam_date, createdAt: row.created_at };
+}
+
+export interface NotificationPrefsRow {
+  user_id: string;
+  daily_enabled: boolean;
+  daily_hour: number;
+  weekly_enabled: boolean;
+  overdue_enabled: boolean;
+  channel_email: boolean;
+  channel_telegram: boolean;
+  telegram_chat_id: string | null;
+  timezone: string;
+  unsubscribe_token: string;
+}
+
+export function fromNotificationPrefsRow(row: NotificationPrefsRow): NotificationPrefs {
+  return {
+    userId: row.user_id,
+    dailyEnabled: row.daily_enabled,
+    dailyHour: row.daily_hour,
+    weeklyEnabled: row.weekly_enabled,
+    overdueEnabled: row.overdue_enabled,
+    channelEmail: row.channel_email,
+    channelTelegram: row.channel_telegram,
+    telegramChatId: row.telegram_chat_id,
+    timezone: row.timezone,
+    unsubscribeToken: row.unsubscribe_token,
+  };
+}
+
+export function toNotificationPrefsRow(
+  patch: Partial<Pick<NotificationPrefs, "dailyEnabled" | "dailyHour" | "weeklyEnabled" | "overdueEnabled" | "channelEmail" | "channelTelegram">>,
+) {
+  const row: Record<string, unknown> = {};
+  if (patch.dailyEnabled !== undefined) row.daily_enabled = patch.dailyEnabled;
+  if (patch.dailyHour !== undefined) row.daily_hour = patch.dailyHour;
+  if (patch.weeklyEnabled !== undefined) row.weekly_enabled = patch.weeklyEnabled;
+  if (patch.overdueEnabled !== undefined) row.overdue_enabled = patch.overdueEnabled;
+  if (patch.channelEmail !== undefined) row.channel_email = patch.channelEmail;
+  if (patch.channelTelegram !== undefined) row.channel_telegram = patch.channelTelegram;
+  return row;
 }
