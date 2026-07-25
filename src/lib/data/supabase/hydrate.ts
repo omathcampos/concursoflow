@@ -14,10 +14,23 @@ import {
   fromTopicRow,
 } from "@/lib/data/supabase/mappers";
 
+export interface HydrateOptions {
+  /**
+   * Revalidação em segundo plano (ex.: refetch ao focar a janela): não mexe
+   * em `status`/`error` — a UI atual fica montada e intacta enquanto busca
+   * dados novos, e uma falha (rede offline etc.) não aparece pro usuário,
+   * só mantém os dados que já estavam na tela. Sem `silent` (boot inicial,
+   * troca de usuário), o comportamento é o de sempre: `status` passa por
+   * "loading" e o `DataProvider` mostra a tela de carregamento.
+   */
+  silent?: boolean;
+}
+
 /** Busca todas as tabelas do usuário em paralelo e popula o cache reativo. Chamada no boot e no refetch por foco de janela. */
-export async function hydrateSupabaseCache(client: SupabaseClient, userId: string): Promise<void> {
+export async function hydrateSupabaseCache(client: SupabaseClient, userId: string, options: HydrateOptions = {}): Promise<void> {
+  const { silent = false } = options;
   const cache = useSupabaseCache.getState();
-  cache.setStatus("loading");
+  if (!silent) cache.setStatus("loading");
 
   const [subjectsRes, topicsRes, cyclesRes, cycleEntriesRes, blocksRes, sessionsRes, reviewsRes, annotationsRes, profileRes, notificationPrefsRes] =
     await Promise.all([
@@ -46,7 +59,7 @@ export async function hydrateSupabaseCache(client: SupabaseClient, userId: strin
     notificationPrefsRes,
   ].find((res) => res.error)?.error;
   if (firstError) {
-    cache.setError(firstError.message);
+    if (!silent) cache.setError(firstError.message);
     throw firstError;
   }
 
