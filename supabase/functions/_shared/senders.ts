@@ -1,6 +1,6 @@
 // Cada canal é só um "sender": recebe conteúdo já montado/renderizado e despacha.
 
-const RESEND_FROM = "ConcursoFlow <onboarding@resend.dev>";
+const RESEND_FROM = "ConcursoFlow <no-reply@concursoflow.com>";
 
 export async function sendEmail(to: string, subject: string, html: string, text: string): Promise<void> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
