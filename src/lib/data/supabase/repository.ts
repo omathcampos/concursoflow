@@ -455,9 +455,16 @@ export function createSupabaseRepository(client: SupabaseClient, userId: string)
           method: "POST",
           headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
         });
-        const result = (await res.json()) as NotificationTestResult;
-        if (!res.ok) throw new Error("Não foi possível enviar o teste.");
-        return result;
+        const bodyText = await res.text();
+        const parsed = (() => {
+          try {
+            return bodyText ? JSON.parse(bodyText) : {};
+          } catch {
+            return {};
+          }
+        })();
+        if (!res.ok) throw new Error(typeof parsed.error === "string" ? parsed.error : "Não foi possível enviar o teste.");
+        return parsed as NotificationTestResult;
       }, "Não foi possível enviar a notificação de teste."),
   };
 

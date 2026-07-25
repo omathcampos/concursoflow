@@ -1,12 +1,15 @@
 "use client";
 
 import { AlertTriangle, GraduationCap, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getDataSource } from "@/lib/data/data-source";
 import { useSupabaseCache } from "@/lib/data/supabase/cache-store";
 import { getSupabaseBrowserClient } from "@/lib/data/supabase/client";
-import { hydrateSupabaseCache } from "@/lib/data/supabase/hydrate";
+import { hydrateSupabaseCache, type HydrateOptions } from "@/lib/data/supabase/hydrate";
+
+/** Alt-tab rápido não deve disparar rede de novo — só revalida por foco se já fazem 30s+ da última tentativa. */
+const FOCUS_REVALIDATE_THROTTLE_MS = 30_000;
 
 function BootScreen({ icon, message }: { icon: React.ReactNode; message: string }) {
   return (
@@ -39,6 +42,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const setUserEmail = useSupabaseCache((s) => s.setUserEmail);
   const setStatus = useSupabaseCache((s) => s.setStatus);
   const [authError, setAuthError] = useState<string | null>(null);
+  const lastFocusRevalidateAtRef = useRef(0);
 
   useEffect(() => {
     if (dataSource !== "supabase") return;
@@ -46,16 +50,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const client = getSupabaseBrowserClient();
 
-    async function hydrateFor(userId: string) {
+    async function hydrateFor(userId: string, options?: HydrateOptions) {
       try {
-        await hydrateSupabaseCache(client, userId);
+        await hydrateSupabaseCache(client, userId, options);
       } catch {
         // Logo após o login, alguma request pode cair num nó de borda com o
         // relógio levemente atrasado (JWT ainda "não válido" por < 1s) —
         // uma única retentativa curta resolve sem precisar recarregar a página.
         await new Promise((resolve) => setTimeout(resolve, 800));
         if (cancelled) return;
-        await hydrateSupabaseCache(client, userId).catch(() => {});
+        await hydrateSupabaseCache(client, userId, options).catch(() => {});
       }
     }
 
@@ -88,15 +92,41 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (event === "SIGNED_IN" && session?.user) {
+        // supabase-js reemite "SIGNED_IN" ao revalidar a sessão quando a aba
+        // volta a ficar visível — não é um login novo. Se já temos esse
+        // mesmo usuário no cache, trata como a revalidação silenciosa do
+        // onFocus (mesmo throttle); só refaz o boot completo (com tela de
+        // carregamento) quando é de fato outro usuário.
+        const currentUserId = useSupabaseCache.getState().userId;
+        const isSameUser = currentUserId === session.user.id;
+
         setUserId(session.user.id);
         setUserEmail(session.user.email ?? null);
-        hydrateFor(session.user.id);
+
+        if (isSameUser) {
+          const now = Date.now();
+          if (now - lastFocusRevalidateAtRef.current < FOCUS_REVALIDATE_THROTTLE_MS) return;
+          lastFocusRevalidateAtRef.current = now;
+          hydrateFor(session.user.id, { silent: true }).catch(() => {});
+        } else {
+          hydrateFor(session.user.id);
+        }
       }
     });
 
     function onFocus() {
       const userId = useSupabaseCache.getState().userId;
-      if (userId) hydrateFor(userId).catch(() => {});
+      if (!userId) return;
+
+      const now = Date.now();
+      if (now - lastFocusRevalidateAtRef.current < FOCUS_REVALIDATE_THROTTLE_MS) return;
+      lastFocusRevalidateAtRef.current = now;
+
+      // silent: revalida em segundo plano sem tocar em status/error — a tela
+      // atual (dialogs abertos, scroll, cronômetro) permanece intacta; só
+      // troca os dados quando a busca terminar. Falha (offline etc.) some
+      // sem toast, mantendo o que já estava na tela.
+      hydrateFor(userId, { silent: true }).catch(() => {});
     }
     window.addEventListener("focus", onFocus);
 

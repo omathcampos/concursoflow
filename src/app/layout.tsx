@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <TooltipProvider>
             {children}

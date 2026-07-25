@@ -22,6 +22,9 @@ blob-report/
 # Vercel
 .vercel
 
+# Supabase CLI local link state
+supabase/.temp/
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

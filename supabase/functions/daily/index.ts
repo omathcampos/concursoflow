@@ -2,6 +2,7 @@
 // usuário) ou teste manual (JWT do próprio usuário + ?test=true).
 import { buildDailyContent, getLocalBounds } from "../_shared/build-content.ts";
 import { renderDailyEmailHtml, renderDailyEmailText, renderDailyTelegramHtml, shouldSendDaily } from "../_shared/content.ts";
+import { corsJson, handleCorsPreflight } from "../_shared/cors.ts";
 import { getAdminClient, getUserFromAuthHeader, isCronAuthorized } from "../_shared/db.ts";
 import { sendEmail, sendTelegramMessage } from "../_shared/senders.ts";
 import type { NotificationPrefsRow } from "../_shared/types.ts";
@@ -56,6 +57,9 @@ async function processUser(admin: ReturnType<typeof getAdminClient>, prefs: Noti
 }
 
 Deno.serve(async (req: Request) => {
+  const preflight = handleCorsPreflight(req);
+  if (preflight) return preflight;
+
   const url = new URL(req.url);
   const isTest = url.searchParams.get("test") === "true";
   const admin = getAdminClient();
@@ -63,16 +67,20 @@ Deno.serve(async (req: Request) => {
 
   if (isTest) {
     const user = await getUserFromAuthHeader(req.headers.get("authorization"));
-    if (!user) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
+    if (!user) return corsJson({ error: "unauthorized" }, 401);
 
     const { data: prefs } = await admin.from("notification_prefs").select("*").eq("user_id", user.id).single();
-    if (!prefs) return new Response(JSON.stringify({ error: "prefs not found" }), { status: 404 });
+    if (!prefs) return corsJson({ error: "prefs not found" }, 404);
 
-    const result = await processUser(admin, prefs as NotificationPrefsRow, true, now);
-    return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json" } });
+    try {
+      const result = await processUser(admin, prefs as NotificationPrefsRow, true, now);
+      return corsJson(result);
+    } catch (err) {
+      return corsJson({ error: String(err instanceof Error ? err.message : err) }, 500);
+    }
   }
 
-  if (!isCronAuthorized(req)) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
+  if (!isCronAuthorized(req)) return corsJson({ error: "unauthorized" }, 401);
 
   const { data: allPrefs } = await admin.from("notification_prefs").select("*").eq("daily_enabled", true);
   const results = [];
@@ -83,5 +91,5 @@ Deno.serve(async (req: Request) => {
       results.push({ user_id: prefs.user_id, error: String(err) });
     }
   }
-  return new Response(JSON.stringify({ processed: results.length, results }), { headers: { "Content-Type": "application/json" } });
+  return corsJson({ processed: results.length, results });
 });
