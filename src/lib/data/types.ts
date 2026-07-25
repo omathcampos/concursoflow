@@ -106,3 +106,16 @@ export interface Profile {
   examDate: string | null;
   createdAt: string;
 }
+
+export interface NotificationPrefs {
+  userId: string;
+  dailyEnabled: boolean;
+  dailyHour: number;
+  weeklyEnabled: boolean;
+  overdueEnabled: boolean;
+  channelEmail: boolean;
+  channelTelegram: boolean;
+  telegramChatId: string | null;
+  timezone: string;
+  unsubscribeToken: string;
+}
