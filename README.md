@@ -4,7 +4,7 @@
 
 > Feito para quem estuda com Tec Concursos (questões) e Estratégia Concursos (aulas/PDFs) — mas serve para qualquer rotina de estudos.
 
-**🔗 [App em produção](https://concursoflow-alpha.vercel.app)**
+**🔗 [App em produção](https://concursoflow.com)**
 
 ![Dashboard do ConcursoFlow](./public/screenshot-dashboard.png)
 ![Calendário do ConcursoFlow](./public/screenshot-calendario.png)
