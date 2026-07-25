@@ -77,8 +77,12 @@ Deno.serve(async (req: Request) => {
     const { data: prefs } = await admin.from("notification_prefs").select("*").eq("user_id", user.id).single();
     if (!prefs) return corsJson({ error: "prefs not found" }, 404);
 
-    const result = await processUser(admin, prefs as NotificationPrefsRow, true, now);
-    return corsJson(result);
+    try {
+      const result = await processUser(admin, prefs as NotificationPrefsRow, true, now);
+      return corsJson(result);
+    } catch (err) {
+      return corsJson({ error: String(err instanceof Error ? err.message : err) }, 500);
+    }
   }
 
   if (!isCronAuthorized(req)) return corsJson({ error: "unauthorized" }, 401);
