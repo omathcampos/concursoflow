@@ -109,6 +109,29 @@ test.describe("login, logout e isolamento entre usuários", () => {
     await expect(menuTrigger.getByText(initials, { exact: true })).toBeVisible();
   });
 
+  test("revalidação por foco da janela é silenciosa: não remonta o app nem fecha dialog aberto", async ({ page }) => {
+    await login(page, userAEmail!, userAPassword!);
+    await page.goto("/materias");
+
+    await page.getByRole("button", { name: "Nova matéria" }).first().click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await page.getByLabel("Nome").fill("Não deve sumir no refetch");
+
+    // Simula o app perdendo e recuperando o foco (ex.: alt-tab) — dispara o
+    // listener de "focus" do DataProvider, que deve revalidar em segundo
+    // plano sem desmontar a árvore (ver data-provider.tsx).
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("blur"));
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    // Nem a tela de boot aparece, nem o dialog fecha, nem o valor digitado some.
+    await expect(page.getByText("Carregando seus dados…")).toHaveCount(0);
+    await expect(dialog).toBeVisible();
+    await expect(page.getByLabel("Nome")).toHaveValue("Não deve sumir no refetch");
+  });
+
   test("dados de um usuário não aparecem para o outro (RLS)", async ({ browser }) => {
     const subjectA = `Matéria E2E A ${Date.now()}`;
     const subjectB = `Matéria E2E B ${Date.now()}`;
