@@ -6,6 +6,7 @@ import {
   fromBlockRow,
   fromCycleEntryRow,
   fromCycleRow,
+  fromNotificationPrefsRow,
   fromProfileRow,
   fromReviewRow,
   fromSessionRow,
@@ -18,21 +19,32 @@ export async function hydrateSupabaseCache(client: SupabaseClient, userId: strin
   const cache = useSupabaseCache.getState();
   cache.setStatus("loading");
 
-  const [subjectsRes, topicsRes, cyclesRes, cycleEntriesRes, blocksRes, sessionsRes, reviewsRes, annotationsRes, profileRes] = await Promise.all([
-    client.from("subjects").select("*"),
-    client.from("topics").select("*"),
-    client.from("cycles").select("*"),
-    client.from("cycle_entries").select("*"),
-    client.from("blocks").select("*"),
-    client.from("sessions").select("*"),
-    client.from("reviews").select("*"),
-    client.from("annotations").select("*"),
-    client.from("profiles").select("*").eq("id", userId).maybeSingle(),
-  ]);
+  const [subjectsRes, topicsRes, cyclesRes, cycleEntriesRes, blocksRes, sessionsRes, reviewsRes, annotationsRes, profileRes, notificationPrefsRes] =
+    await Promise.all([
+      client.from("subjects").select("*"),
+      client.from("topics").select("*"),
+      client.from("cycles").select("*"),
+      client.from("cycle_entries").select("*"),
+      client.from("blocks").select("*"),
+      client.from("sessions").select("*"),
+      client.from("reviews").select("*"),
+      client.from("annotations").select("*"),
+      client.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      client.from("notification_prefs").select("*").eq("user_id", userId).maybeSingle(),
+    ]);
 
-  const firstError = [subjectsRes, topicsRes, cyclesRes, cycleEntriesRes, blocksRes, sessionsRes, reviewsRes, annotationsRes, profileRes].find(
-    (res) => res.error,
-  )?.error;
+  const firstError = [
+    subjectsRes,
+    topicsRes,
+    cyclesRes,
+    cycleEntriesRes,
+    blocksRes,
+    sessionsRes,
+    reviewsRes,
+    annotationsRes,
+    profileRes,
+    notificationPrefsRes,
+  ].find((res) => res.error)?.error;
   if (firstError) {
     cache.setError(firstError.message);
     throw firstError;
@@ -48,5 +60,6 @@ export async function hydrateSupabaseCache(client: SupabaseClient, userId: strin
     reviews: (reviewsRes.data ?? []).map(fromReviewRow),
     annotations: (annotationsRes.data ?? []).map(fromAnnotationRow),
     profile: profileRes.data ? fromProfileRow(profileRes.data) : useSupabaseCache.getState().profile,
+    notificationPrefs: notificationPrefsRes.data ? fromNotificationPrefsRow(notificationPrefsRes.data) : undefined,
   });
 }

@@ -1,5 +1,7 @@
-import type { BlockRepo, CrudRepo, CycleRepo, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
+import type { BlockRepo, CrudRepo, CycleRepo, NotificationsRepo, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
 import type { LocalState } from "@/lib/data/local/store";
+
+const SUPABASE_ONLY_ERROR = "Notificações por email/Telegram exigem o backend Supabase — indisponível no modo local.";
 
 // As ações do Zustand store são síncronas por natureza (localStorage), mas o
 // Repository exige mutações async (ver repository.ts) — aqui só embrulhamos
@@ -88,5 +90,21 @@ export function createLocalRepository(state: LocalState): Repository {
       get: () => state.profile,
       update: async (patch) => state.updateProfile(patch),
     } satisfies ProfileRepo,
+    notifications: {
+      get: () => state.notificationPrefs,
+      update: async (patch) => state.updateNotificationPrefs(patch),
+      generateTelegramLinkCode: async () => {
+        throw new Error(SUPABASE_ONLY_ERROR);
+      },
+      refreshTelegramLink: async () => {
+        throw new Error(SUPABASE_ONLY_ERROR);
+      },
+      unlinkTelegram: async () => {
+        throw new Error(SUPABASE_ONLY_ERROR);
+      },
+      sendTest: async () => {
+        throw new Error(SUPABASE_ONLY_ERROR);
+      },
+    } satisfies NotificationsRepo,
   };
 }
