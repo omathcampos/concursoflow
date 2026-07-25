@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Visão em 3 linhas
-ConcursoFlow é um app de cronograma de estudos para concursos públicos (calendário, ciclo de estudos, sessões, revisões espaçadas, dashboard). Stack: Next.js 16 (App Router, Turbopack) + TypeScript strict + Tailwind v4 + shadcn/ui (Base UI) + Zustand (local-first e cache do Supabase) + Supabase (banco real desde a fase 7). Estado atual: **v1.0.0 publicado em produção (Vercel); Fases 0–8 concluídas; Fase 9 (Polimento + deploy) em revisão.**
+ConcursoFlow é um app de cronograma de estudos para concursos públicos (calendário, ciclo de estudos, sessões, revisões espaçadas, dashboard, notificações). Stack: Next.js 16 (App Router, Turbopack) + TypeScript strict + Tailwind v4 + shadcn/ui (Base UI) + Zustand (local-first e cache do Supabase) + Supabase (banco real desde a fase 7, com pg_cron + Edge Functions desde a fase 10). Estado atual: **v1.1.0 publicado em produção (Vercel); Fases 0–10 concluídas e mergeadas em `develop`; Fase 11 (Melhorias) ainda não iniciada.**
 
 ## Comandos
 - `npm run dev` — dev server (Turbopack)
@@ -38,6 +38,12 @@ Branch `feature/fase-XX-nome` a partir de `develop` → PR → CI verde → merg
 Prompts de cada fase em `prompts/fase-XX-*.md` (fonte de referência: pasta `cronograma/` fora do repo — resincronizar aqui quando houver novidades). Cada fase tem critérios de aceite que devem TODOS passar antes do PR, e a suíte e2e das fases anteriores precisa continuar verde (regressões intencionais são esperadas e documentadas no PR quando um comportamento muda de propósito).
 
 ## Estado do projeto
-Fases 0–8 concluídas e mergeadas. `v1.0.0` publicado em `master` e no ar na Vercel (produção = `master`, previews = PRs) — https://concursoflow-alpha.vercel.app. Fase 9 (Polimento: revisão visual/responsiva, estados vazios/404/error boundary, PWA leve, cobertura 100% em `lib/domain/`, deploy) implementada, aguardando CI/merge. `src/middleware.ts` foi renomeado para `src/proxy.ts` (convenção do Next.js 16 — o export também virou `proxy`, não `middleware`). Fases 10+ (Notificações, Melhorias) ainda não iniciadas; próximos releases devem ser bumps minor (v1.1.0...), não major.
+Fases 0–10 concluídas e mergeadas em `develop`. `v1.1.0` (Fase 9 — Polimento) publicado em `master` e no ar na Vercel (produção = `master`, previews = PRs) — https://concursoflow-alpha.vercel.app; `v1.2.0` (Fase 10) ainda não teve release/tag em `master` (só mergeada em `develop`). `src/middleware.ts` foi renomeado para `src/proxy.ts` (convenção do Next.js 16 — o export também virou `proxy`, não `middleware`).
+
+Fase 10 (Notificações — email via Resend + Telegram bot) implementada: `pg_cron` agenda 3 Edge Functions Deno (`daily`/`weekly`/`overdue`, `supabase/functions/`) que montam o conteúdo e despacham pelos canais habilitados de cada usuário; `telegram-webhook` trata vínculo/desvínculo (`/start CODIGO`, `/stop`); `unsubscribe` é pública (sem login, via `unsubscribe_token`). UI de preferências na página de Perfil. Duas notas importantes para quem mexer nessas functions:
+- `supabase/functions/deno.json` só existe para o `deno check` local reconhecer o global `Deno` — **nunca inclua esse arquivo no array `files` do `deploy_edge_function`**, causa um bug no import_map_path do tool. Deploys usam `entrypoint_path: "<função>/index.ts"` e cada arquivo do array `files` com o path real (`"<função>/index.ts"`, `"_shared/xxx.ts"`) para o bundle remoto espelhar a estrutura real em disco (`_shared/` é irmã de cada pasta de função, imports usam `../_shared/...`).
+- Lógica de conteúdo/rate-limit é TDD-testada em `src/lib/domain/notifications.ts`; as Edge Functions (Deno) têm uma cópia mínima e documentada em `supabase/functions/_shared/` porque Deno não importa módulos do app Next.js — qualquer mudança de regra de negócio precisa refletir nos dois lados.
+
+Fase 11 (Melhorias — modo foco do cronômetro; anotações/observações já entregues na fase 2) ainda não iniciada. Próximos releases: sempre bump minor, nunca major.
 
 *(Atualizar esta seção ao final de cada fase — é a primeira coisa que uma nova sessão do Claude Code deve conferir.)*
