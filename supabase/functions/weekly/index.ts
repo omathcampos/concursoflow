@@ -38,24 +38,34 @@ async function processUser(admin: ReturnType<typeof getAdminClient>, prefs: Noti
   const results: Record<string, string> = {};
 
   if (prefs.channel_email && (isTest || (await canSendToday(admin, prefs.user_id, "email")))) {
-    const { data: authUser } = await admin.auth.admin.getUserById(prefs.user_id);
-    const email = authUser?.user?.email;
-    if (email) {
-      await sendEmail(
-        email,
-        "📊 Seu resumo da semana no ConcursoFlow",
-        renderWeeklyEmailHtml(content, displayName, unsubscribeUrl),
-        renderWeeklyEmailText(content, displayName),
-      );
-      if (!isTest) await admin.from("notification_log").insert({ user_id: prefs.user_id, type: "weekly", channel: "email", status: "sent" });
-      results.email = "sent";
+    try {
+      const { data: authUser } = await admin.auth.admin.getUserById(prefs.user_id);
+      const email = authUser?.user?.email;
+      if (email) {
+        await sendEmail(
+          email,
+          "📊 Seu resumo da semana no ConcursoFlow",
+          renderWeeklyEmailHtml(content, displayName, unsubscribeUrl),
+          renderWeeklyEmailText(content, displayName),
+        );
+        if (!isTest) await admin.from("notification_log").insert({ user_id: prefs.user_id, type: "weekly", channel: "email", status: "sent" });
+        results.email = "sent";
+      }
+    } catch (err) {
+      if (isTest) throw err;
+      results.email = `error: ${String(err instanceof Error ? err.message : err)}`;
     }
   }
 
   if (prefs.channel_telegram && prefs.telegram_chat_id && (isTest || (await canSendToday(admin, prefs.user_id, "telegram")))) {
-    await sendTelegramMessage(prefs.telegram_chat_id, renderWeeklyTelegramHtml(content));
-    if (!isTest) await admin.from("notification_log").insert({ user_id: prefs.user_id, type: "weekly", channel: "telegram", status: "sent" });
-    results.telegram = "sent";
+    try {
+      await sendTelegramMessage(prefs.telegram_chat_id, renderWeeklyTelegramHtml(content));
+      if (!isTest) await admin.from("notification_log").insert({ user_id: prefs.user_id, type: "weekly", channel: "telegram", status: "sent" });
+      results.telegram = "sent";
+    } catch (err) {
+      if (isTest) throw err;
+      results.telegram = `error: ${String(err instanceof Error ? err.message : err)}`;
+    }
   }
 
   return results;
