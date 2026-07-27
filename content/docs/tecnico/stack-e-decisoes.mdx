@@ -1,0 +1,47 @@
+---
+title: Stack e decisões
+description: Tabela do porquê de cada escolha tecnológica, com as decisões reais tomadas durante o desenvolvimento.
+---
+
+## Stack
+
+| Camada | Tecnologia | Por quê |
+|---|---|---|
+| Framework | Next.js 16 (App Router, Turbopack) | SSR/SSG, roteamento por arquivos, build rápido com Turbopack |
+| Linguagem | TypeScript (strict) | Segurança de tipos ponta a ponta, do domínio ao banco |
+| Estilo | Tailwind CSS v4 | Utility-first, tokens de tema via `@theme inline`, zero CSS-in-JS |
+| Componentes | shadcn/ui sobre **Base UI** (não Radix) | Componentes acessíveis, mas com a API de composição do Base UI (`render` em vez de `asChild`) |
+| Estado local/cache | Zustand | Simples, sem boilerplate de Context, serve tanto de store local-first quanto de cache do Supabase |
+| Backend | Supabase (Postgres + Auth + RLS) | Postgres real com RLS nativo, Auth pronta, Edge Functions e `pg_cron` no mesmo projeto |
+| Deploy | Vercel | Deploy automático por branch, previews por PR |
+| Documentação | Fumadocs (`@fumadocs/base-ui`) | Mesma família de primitivos (Base UI) do resto do app — evita ter duas bibliotecas de componentes (Radix + Base UI) coexistindo |
+
+## Decisões que vale a pena entender
+
+### Cache reativo em vez de `list()`/`get()` assíncronos
+
+Já coberto em [Visão geral da arquitetura](/docs/tecnico/arquitetura) — a decisão mais estrutural do projeto. Qualquer fase futura que mexer no `Repository` **não deve** tornar as leituras assíncronas.
+
+### `src/middleware.ts` → `src/proxy.ts`
+
+Convenção do Next.js 16: o arquivo de middleware de borda foi renomeado, e o export também virou `proxy` (não mais `middleware`). Isso é puramente nominal — a lógica de gate de autenticação continua a mesma.
+
+### React Compiler (`reactCompiler: true`) e stores externas
+
+Com o React Compiler habilitado, um componente pode **parar de re-renderizar** depois da primeira atualização de uma store externa (Zustand) se a subscrição não virar uma dependência explícita do React. Um `void store((s) => s)` descartado, por exemplo, não é suficiente. O padrão correto (usado em `useRepo()`) é envolver a derivação num `useMemo(() => ..., [valorDaStore])`.
+
+### Base UI, não Radix
+
+`shadcn/ui` tradicionalmente usa Radix por baixo, mas este projeto usa a variante **Base UI**. A diferença mais visível no dia a dia: composição usa a prop `render`, não `asChild`. Um caso específico: links não devem passar por `Button render={<Link/>}` — Base UI exige semântica nativa de botão, então links estilizados como botão usam `buttonVariants` direto na tag `<a>`/`<Link>`.
+
+### Datas sempre via `date-fns`, nunca `toISOString()` para comparar dias
+
+Comparar datas por dia (ex.: "esse bloco é hoje?") usando `toISOString()` desloca o resultado pelo fuso horário local — um bloco às 23h pode "virar" o dia seguinte em UTC. O projeto usa `date-fns` (`format()`, `isSameDay()`) de ponta a ponta para isso, com locale `pt-BR`.
+
+### Feed iCal em UTC, sem `VTIMEZONE`
+
+Uma decisão específica da fase 12 (exportar calendário): em vez de gerar um bloco `VTIMEZONE` customizado no `.ics` (regras de transição de fuso escritas à mão, propensas a erro), os horários `DTSTART`/`DTEND` são emitidos direto em UTC (sufixo `Z`). Os timestamps do banco já são instantes UTC, e todo cliente de calendário (Google, Apple, Outlook) converte um instante UTC pro fuso do dispositivo automaticamente — funcionalmente idêntico a um `VTIMEZONE` bem escrito, sem o risco de escrever um errado.
+
+### Edge Function pública em vez de Next.js Route Handler (feed de calendário)
+
+O endpoint `calendar-feed` (fase 12) é uma Edge Function do Supabase, não uma rota do Next.js, apesar de rodar dentro do mesmo repositório. Motivo: Edge Functions já recebem `SUPABASE_SERVICE_ROLE_KEY` automaticamente do ambiente Supabase; um Route Handler precisaria dessa mesma chave configurada manualmente como variável de ambiente na Vercel — mais uma peça de configuração pra manter sincronizada entre dois provedores diferentes.

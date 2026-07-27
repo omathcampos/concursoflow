@@ -9,6 +9,9 @@ out/
 build/
 dist/
 
+# Fumadocs (fase 13) — gerado a partir de source.config.ts + content/docs
+.source/
+
 # Testing
 coverage/
 playwright-report/

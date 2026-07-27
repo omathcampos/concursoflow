@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "coverage/**",
+    // Gerado pelo fumadocs-mdx a partir de source.config.ts (fase 13).
+    ".source/**",
   ]),
 ]);
 

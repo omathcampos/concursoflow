@@ -1,0 +1,35 @@
+---
+title: Primeiros passos
+description: Criar conta, cadastrar matérias e tópicos com pesos, e montar o ciclo de estudos.
+---
+
+## 1. Criar conta
+
+Acesse [concursoflow.com/cadastro](https://concursoflow.com/cadastro) e crie sua conta com email e senha. Depois de confirmar o email, você já cai direto no Dashboard — vazio, até você cadastrar as primeiras matérias.
+
+<Callout type="info">
+  Seus dados ficam isolados por usuário: ninguém mais vê suas matérias, sessões ou anotações. Isso é garantido no
+  banco de dados (Row Level Security), não só na interface.
+</Callout>
+
+## 2. Cadastrar matérias e tópicos
+
+Vá em **Matérias** → **Nova matéria**. Para cada matéria você define:
+
+- **Nome** e **cor** (usada em todo o app: calendário, dashboard, feed exportado).
+- **Peso** (1 a 5) — o quanto essa matéria pesa no edital. Pesos maiores puxam mais tempo de estudo quando o ciclo sugere a próxima matéria (veja [Ciclo de estudos](/docs/guia/ciclo-de-estudos)).
+- **Observações** (opcional) — um campo de notas livre sobre a matéria.
+
+Dentro de cada matéria, cadastre os **tópicos** do edital (ex.: "Controle de Constitucionalidade" dentro de Direito Constitucional). Cada tópico tem um status: **não iniciado**, **estudando** ou **concluído** — você atualiza isso conforme avança, e dá pra ver o progresso de cada matéria de relance.
+
+## 3. Montar o ciclo de estudos
+
+Vá em **Ciclo** → **Configurar ciclo**. Para cada matéria que você quer incluir no rodízio, defina uma **meta de horas** (a meta da rodada atual). O app calcula automaticamente quantas horas você já estudou de cada uma (a partir das suas sessões) e usa isso pra sugerir **"estude agora"**: sempre a matéria com menor proporção `horas estudadas / meta`, e em caso de empate, a de maior peso.
+
+Quando todas as matérias da rodada atingem a meta, o ciclo fica "completo" e você pode iniciar uma nova rodada — geralmente ajustando as metas com base no que rendeu mais ou menos na rodada anterior.
+
+## 4. Agendar o primeiro bloco
+
+Vá em **Calendário**, clique em uma célula vazia num horário livre, escolha a matéria (o app já sugere pelo ciclo), o tipo de estudo (teoria, questões, revisão, lei seca ou aula) e pronto — seu primeiro bloco está agendado.
+
+Pronto: matérias cadastradas, ciclo montado, primeiro bloco na agenda. A partir daqui, o fluxo do dia a dia é: abrir o Calendário ou o Dashboard, estudar o bloco (com ou sem o cronômetro), marcar como concluído, e deixar o app cuidar de lembrar você das revisões.

@@ -1,0 +1,38 @@
+---
+title: Sessões e cronômetro
+description: Registro manual, cronômetro integrado, modo foco, e como registrar questões (Tec) vs. teoria (Estratégia).
+---
+
+## O que é uma sessão
+
+Uma **sessão** é um registro de estudo já realizado: matéria, tópico, tipo, quando começou, quanto durou, e (dependendo do tipo) questões feitas/corretas ou páginas lidas. Toda sessão alimenta o Dashboard, o progresso do ciclo, e — se marcada com opt-in — a fila de revisões espaçadas.
+
+Existem duas formas de registrar uma sessão: **manual** ou via **cronômetro**.
+
+## Registro manual
+
+Na página **Sessões**, clique em "Nova sessão" e preencha os campos direto: matéria, tópico, tipo, data/hora de início, duração, e os campos específicos do tipo de estudo (veja abaixo). Útil quando você já estudou e só quer registrar depois.
+
+## Cronômetro
+
+O cronômetro (visível no Calendário e em outras telas) permite **iniciar, pausar e parar** um cronômetro vinculado a uma matéria. Ao parar, ele abre o formulário de registro de sessão já com a duração calculada e pré-preenchida — você só completa os detalhes.
+
+### Modo foco
+
+Durante o cronômetro, o botão **Modo foco** abre um overlay em tela cheia (usando a Fullscreen API do navegador, com fallback caso não seja suportada) mostrando só a matéria e os controles do cronômetro — sem distrações. No celular, o modo foco também ativa um **Wake Lock**, impedindo a tela de apagar enquanto você estuda.
+
+Pressione <kbd>ESC</kbd> ou o botão de minimizar para voltar ao widget compacto — a contagem continua rodando, não é reiniciada. Parar o cronômetro de dentro do modo foco abre o formulário de registro normalmente.
+
+## Questões (Tec) vs. teoria (Estratégia)
+
+O app foi pensado pra cobrir os dois estilos de estudo mais comuns entre concurseiros:
+
+- **Questões** (tipo "Questões", pensando em plataformas como Tec Concursos): registre o **total de questões** e **quantas você acertou** — o app calcula o % de acerto ao vivo enquanto você digita, e esse número alimenta o Dashboard.
+- **Teoria/Aula** (tipos "Teoria" e "Aula", pensando em Estratégia Concursos e similares): registre **páginas lidas** ou apenas a duração, dependendo do que fizer sentido pro seu material.
+- **Lei seca** e **Revisão** são tipos à parte, sem campos de questões — só duração e observações.
+
+Todo tipo de sessão aceita um campo de **observações** livre.
+
+## Filtros na lista de sessões
+
+A página Sessões permite filtrar o histórico por matéria, tipo de estudo e período — útil pra conferir rapidamente quanto tempo você dedicou a um tópico específico nas últimas semanas.

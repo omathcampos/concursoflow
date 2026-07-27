@@ -1,0 +1,37 @@
+---
+title: Git Flow e releases
+description: Fluxo de branches, CI e versionamento.
+---
+
+## Fluxo de branches
+
+```
+feature/fase-XX-nome  (ou fix/nome, docs/nome, chore/nome)
+  ↓ a partir de develop
+  ↓ PR → CI verde → merge → apaga a branch
+develop
+  ↓ release/vX.Y.0 (bump de versão)
+  ↓ PR → CI verde → merge
+master
+  ↓ tag vX.Y.0 + GitHub Release
+  ↓ deploy automático (Vercel) em produção
+  ↓ backmerge pra develop (PR próprio)
+```
+
+Nunca há push direto em `develop` ou `master` — toda mudança passa por PR com CI verde. Commits seguem **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`).
+
+## CI
+
+Todo PR roda: lint, type-check, testes unitários, build, e2e (`.github/workflows/ci.yml`). Branch protection exige o check `ci` verde antes do merge — inclusive para PRs de backmerge.
+
+## Versionamento
+
+Sempre **minor**, nunca major (`v1.5.0` → `v1.6.0`, nunca `v2.0.0`) — o produto está em evolução contínua, sem uma quebra de compatibilidade que justifique um major. Cada feature ou correção individual ganha sua própria release (branch `release/vX.Y.0`, PR pra `master`, tag, GitHub Release), não só nas fronteiras de fase.
+
+## Backmerge
+
+Depois de todo release, `master` recebe commits (o bump de versão, e possíveis PRs mergeados direto nela) que `develop` ainda não tem. Um PR de backmerge (`chore/backmerge-vX.Y.0`, `master` → `develop`) sincroniza as duas branches. Pular esse passo, ou fechar o PR sem mergear de fato, faz `develop` e `master` divergirem de um jeito que só aparece como conflito real numa release futura — já aconteceu neste projeto e é o motivo pelo qual o backmerge é tratado como parte obrigatória do fluxo de release, não um "nice to have".
+
+## Migrations e checklist de fase
+
+Toda migration de schema segue seu próprio changelog em `MIGRATIONS.md` (ver [Banco de dados](/docs/tecnico/banco-de-dados)). O checkbox de cada fase no `README.md` é marcado num PR próprio (`docs: check off Fase X`), depois que os critérios de aceite da fase estão todos cumpridos.

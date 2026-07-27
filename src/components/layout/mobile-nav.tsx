@@ -1,6 +1,6 @@
 "use client";
 
-import { GraduationCap, Menu } from "lucide-react";
+import { BookOpen, GraduationCap, Menu } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -43,6 +43,16 @@ export function MobileNav() {
         </SheetHeader>
         <div className="px-3 py-2">
           <NavLinks onNavigate={() => setOpen(false)} />
+        </div>
+        <div className="border-t border-sidebar-border px-3 py-2">
+          <Link
+            href="/docs"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-theme hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <BookOpen className="h-4 w-4 shrink-0" />
+            Documentação
+          </Link>
         </div>
       </SheetContent>
     </Sheet>

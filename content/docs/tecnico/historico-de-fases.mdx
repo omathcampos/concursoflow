@@ -1,0 +1,62 @@
+---
+title: Histórico de fases
+description: Resumo de cada fase do desenvolvimento, do zero até a documentação — o que cada uma entregou.
+---
+
+O desenvolvimento seguiu prompts fase a fase, cada um em `prompts/fase-XX-*.md` no repositório (fonte de referência: uma pasta `cronograma/` fora do repo, resincronizada aqui quando há novidades). Cada fase virou uma branch `feature/fase-XX-nome`, um PR, e critérios de aceite que precisavam passar todos antes do merge.
+
+## Fase 0 — GitHub, Git Flow e CI
+
+Repositório, convenção de branches, Conventional Commits, pipeline de CI (lint, type-check, testes, build, e2e).
+
+## Fase 1 — Setup Next.js + design system
+
+Next.js (App Router), TypeScript strict, Tailwind, shadcn/ui sobre Base UI, layout base e navegação.
+
+## Fase 2 — Matérias e ciclo
+
+Cadastro de matérias (nome, cor, peso, observações) e tópicos, montagem do ciclo de estudos com metas de horas. Anotações/observações (RF09) também foram entregues aqui, adiantadas em relação ao prompt original.
+
+## Fase 3 — Calendário com drag & drop
+
+Vista semanal e mensal, criação de blocos por clique, arrastar/redimensionar, detecção de sobreposição, recorrência semanal.
+
+## Fase 4 — Sessões + cronômetro
+
+Registro manual de sessões, cronômetro integrado vinculado a uma matéria, formulário pré-preenchido ao parar o cronômetro.
+
+## Fase 5 — Revisões espaçadas
+
+Agendamento automático 24h/7d/30d ao concluir sessão de teoria com opt-in, painel diário de revisões, pular com desfazer.
+
+## Fase 6 — Dashboard
+
+Gráficos de horas por matéria, evolução semanal, % de acerto, distribuição por tipo de estudo, streak.
+
+## Fase 7 — Supabase
+
+Migração do backend: schema Postgres, `SupabaseRepository` como segunda implementação do `Repository`, cache reativo Zustand hidratado do banco. Decisão estrutural do projeto: leitura síncrona/mutação assíncrona (ver [Visão geral da arquitetura](/docs/tecnico/arquitetura)).
+
+## Fase 8 — Autenticação
+
+Login/cadastro/recuperação de senha via Supabase Auth, `user_id` + RLS em todas as tabelas, isolamento de dados entre usuários.
+
+## Fase 9 — Polimento e deploy
+
+Ajustes finais de UX e o primeiro deploy em produção na Vercel — **v1.1.0**.
+
+## Fase 10 — Notificações
+
+Email (Resend) e Telegram bot: lembrete diário, relatório semanal, alerta de revisões atrasadas. `pg_cron` + Edge Functions. Depois do release inicial, uma sequência de correções pós-produção (CORS no preflight, token do Telegram, isolamento entre canais, domínio próprio no remetente) foi entregue em releases incrementais subsequentes — ver [Edge Functions](/docs/tecnico/edge-functions).
+
+## Fase 11 — Melhorias
+
+Modo foco do cronômetro (tela cheia + Wake Lock). Anotações/observações já tinham sido entregues na fase 2 — confirmado por auditoria do código antes de iniciar esta fase, em vez de assumido.
+
+## Fase 12 — Exportar calendário
+
+Feed iCal (.ics) por assinatura (Google Agenda/Apple Calendar/Outlook) via Edge Function pública, + download avulso client-side — **v1.6.0**. Ver [Guia](/docs/guia/exportar-calendario) e [decisões técnicas](/docs/tecnico/stack-e-decisoes).
+
+## Fase 13 — Documentação
+
+Esta documentação: Fumadocs integrado sob `/docs`, pública, com a paleta visual do próprio app.
