@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import type { Annotation, Block, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, CalendarFeed, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 export type CacheStatus = "idle" | "loading" | "ready" | "error";
 
@@ -15,6 +15,7 @@ export interface SupabaseCacheData {
   annotations: Annotation[];
   profile: Profile;
   notificationPrefs: NotificationPrefs | undefined;
+  calendarFeed: CalendarFeed | undefined;
 }
 
 interface SupabaseCacheStore extends SupabaseCacheData {
@@ -53,6 +54,7 @@ export const useSupabaseCache = create<SupabaseCacheStore>((set) => ({
   annotations: [],
   profile: emptyProfile(),
   notificationPrefs: undefined,
+  calendarFeed: undefined,
   status: "idle",
   error: null,
   setUserId: (userId) => set({ userId, profile: emptyProfile(userId ?? "") }),

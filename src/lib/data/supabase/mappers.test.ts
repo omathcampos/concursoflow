@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   fromAnnotationRow,
   fromBlockRow,
+  fromCalendarFeedRow,
   fromCycleEntryRow,
   fromCycleRow,
   fromProfileRow,
@@ -244,7 +245,13 @@ describe("annotations mapper", () => {
 describe("profile mapper", () => {
   it("ida-e-volta sem perda de dados", () => {
     const row = toProfileRow({ displayName: "Fulano", targetExam: "TRT-15", examDate: "2026-12-01" });
-    const full = { id: "u1", created_at: "2026-01-01T00:00:00.000Z", ...row };
+    const full = {
+      id: "u1",
+      created_at: "2026-01-01T00:00:00.000Z",
+      calendar_feed_token: "11111111-1111-1111-1111-111111111111",
+      calendar_feed_include_reviews: false,
+      ...row,
+    };
     expect(fromProfileRow(full)).toEqual({
       id: "u1",
       displayName: "Fulano",
@@ -257,5 +264,15 @@ describe("profile mapper", () => {
   it("campos nulos preservados", () => {
     const row = toProfileRow({ displayName: null, targetExam: null, examDate: null });
     expect(row).toEqual({ display_name: null, target_exam: null, exam_date: null });
+  });
+});
+
+describe("calendar feed mapper", () => {
+  it("converte token e preferência de revisões", () => {
+    const feed = fromCalendarFeedRow({
+      calendar_feed_token: "22222222-2222-2222-2222-222222222222",
+      calendar_feed_include_reviews: true,
+    });
+    expect(feed).toEqual({ token: "22222222-2222-2222-2222-222222222222", includeReviews: true });
   });
 });

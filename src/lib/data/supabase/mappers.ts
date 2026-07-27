@@ -1,7 +1,7 @@
 // Ponto único de conversão snake_case (linhas do Postgres) <-> camelCase (domínio TS).
 // Cada tabela tem um par toXRow/fromXRow. `user_id` é injetado aqui (nunca faz parte do domínio).
 
-import type { Annotation, Block, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, CalendarFeed, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 export interface SubjectRow {
   id: string;
@@ -255,6 +255,8 @@ export interface ProfileRow {
   display_name: string | null;
   target_exam: string | null;
   exam_date: string | null;
+  calendar_feed_token: string;
+  calendar_feed_include_reviews: boolean;
   created_at: string;
 }
 
@@ -264,6 +266,10 @@ export function toProfileRow(input: Partial<Pick<Profile, "displayName" | "targe
 
 export function fromProfileRow(row: ProfileRow): Profile {
   return { id: row.id, displayName: row.display_name, targetExam: row.target_exam, examDate: row.exam_date, createdAt: row.created_at };
+}
+
+export function fromCalendarFeedRow(row: Pick<ProfileRow, "calendar_feed_token" | "calendar_feed_include_reviews">): CalendarFeed {
+  return { token: row.calendar_feed_token, includeReviews: row.calendar_feed_include_reviews };
 }
 
 export interface NotificationPrefsRow {

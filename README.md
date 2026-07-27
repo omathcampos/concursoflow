@@ -19,6 +19,7 @@
 - **Caderno de anotações** — anotações em markdown vinculadas a matérias e tópicos, com busca; observações rápidas em matérias, tópicos, blocos e sessões.
 - **Countdown da prova** — dias restantes até a data do seu concurso, sempre visível.
 - **Multi-usuário** — crie sua conta e acesse de qualquer lugar; seus dados são só seus.
+- **Exportar calendário** — feed iCal (.ics) por assinatura, compatível com Google Agenda, Apple Calendar e Outlook; download avulso do período visível.
 - **Tema Claro/Escuro/Sistema.**
 
 ## 🛠️ Stack
@@ -59,6 +60,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 9 — Polimento + deploy (v1.1.0)
 - [x] Fase 10 — Notificações email + Telegram (v1.2.0): lembrete diário, relatório semanal, alerta de revisões atrasadas
 - [x] Fase 11 — Melhorias (v1.2.0): anotações e observações já entregues na Fase 2; modo foco em tela cheia do cronômetro com Wake Lock
+- [x] Fase 12 — Exportar calendário: feed iCal (.ics) por assinatura (Google Agenda/Apple Calendar/Outlook) + download avulso
 
 **Backlog futuro:** anexar arquivos (PDFs, resumos, imagens) a matérias/tópicos/sessões via Supabase Storage.
 

@@ -119,3 +119,8 @@ export interface NotificationPrefs {
   timezone: string;
   unsubscribeToken: string;
 }
+
+export interface CalendarFeed {
+  token: string;
+  includeReviews: boolean;
+}

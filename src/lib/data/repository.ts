@@ -1,4 +1,4 @@
-import type { Annotation, Block, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
+import type { Annotation, Block, CalendarFeed, Cycle, CycleEntry, NotificationPrefs, Profile, Review, Session, Subject, Topic } from "@/lib/data/types";
 
 // Leituras (list/get/entries/getActive) são síncronas: cada implementação de
 // Repository é responsável por manter um cache local sempre atualizado (o
@@ -63,6 +63,13 @@ export interface NotificationsRepo {
   sendTest(type: "daily" | "weekly" | "overdue"): Promise<NotificationTestResult>;
 }
 
+export interface CalendarFeedRepo {
+  get(): CalendarFeed | undefined;
+  /** Invalida a URL antiga (nova UUID) — usado quando o usuário suspeita que a URL vazou. */
+  regenerateToken(): Promise<CalendarFeed>;
+  setIncludeReviews(value: boolean): Promise<CalendarFeed>;
+}
+
 export interface Repository {
   subjects: CrudRepo<Subject, "id" | "createdAt">;
   topics: CrudRepo<Topic, "id" | "createdAt">;
@@ -73,4 +80,5 @@ export interface Repository {
   reviews: ReviewRepo;
   profile: ProfileRepo;
   notifications: NotificationsRepo;
+  calendarFeed: CalendarFeedRepo;
 }
