@@ -4,6 +4,7 @@ import { useSupabaseCache } from "@/lib/data/supabase/cache-store";
 import {
   fromAnnotationRow,
   fromBlockRow,
+  fromCalendarFeedRow,
   fromCycleEntryRow,
   fromCycleRow,
   fromNotificationPrefsRow,
@@ -74,5 +75,6 @@ export async function hydrateSupabaseCache(client: SupabaseClient, userId: strin
     annotations: (annotationsRes.data ?? []).map(fromAnnotationRow),
     profile: profileRes.data ? fromProfileRow(profileRes.data) : useSupabaseCache.getState().profile,
     notificationPrefs: notificationPrefsRes.data ? fromNotificationPrefsRow(notificationPrefsRes.data) : undefined,
+    calendarFeed: profileRes.data ? fromCalendarFeedRow(profileRes.data) : undefined,
   });
 }

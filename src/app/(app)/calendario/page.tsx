@@ -1,8 +1,8 @@
 "use client";
 
-import { addDays, addMonths, format } from "date-fns";
+import { addDays, addMonths, endOfMonth, format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { BlockDetailsDialog } from "@/components/calendar/block-details-dialog";
 import type { BlockFormValues } from "@/components/calendar/block-form-dialog";
 import { BlockFormDialog } from "@/components/calendar/block-form-dialog";
+import { ExportCalendarDialog } from "@/components/calendar/export-calendar-dialog";
 import { MobileAgenda } from "@/components/calendar/mobile-agenda";
 import { MonthGrid } from "@/components/calendar/month-grid";
 import { WeekGrid } from "@/components/calendar/week-grid";
@@ -47,6 +48,7 @@ export default function CalendarioPage() {
   const [detailsBlockId, setDetailsBlockId] = useState<string | null>(null);
   const [completingBlockId, setCompletingBlockId] = useState<string | null>(null);
   const [completingReviewId, setCompletingReviewId] = useState<string | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   const subjects = repo.subjects.list();
   const topics = repo.topics.list();
@@ -177,6 +179,12 @@ export default function CalendarioPage() {
   }
 
   const weekStart = startOfWeek(anchorDate);
+  const rangeStart = view === "week" ? weekStart : startOfMonth(anchorDate);
+  const rangeEnd = view === "week" ? addDays(weekStart, 7) : endOfMonth(anchorDate);
+  const blocksInView = blocks.filter((b) => {
+    const t = new Date(b.startAt);
+    return t >= rangeStart && t <= rangeEnd;
+  });
   const detailsSubject = detailsBlock ? subjectsById.get(detailsBlock.subjectId) : undefined;
   const detailsTopic = detailsBlock?.topicId ? topics.find((t) => t.id === detailsBlock.topicId) : undefined;
 
@@ -187,9 +195,15 @@ export default function CalendarioPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Calendário</h1>
           <p className="mt-1 text-muted-foreground">Organize sua semana de estudos.</p>
         </div>
-        {subjects.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Cadastre matérias na página Matérias antes de criar blocos.</p>
-        ) : null}
+        <div className="flex items-center gap-4">
+          {subjects.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Cadastre matérias na página Matérias antes de criar blocos.</p>
+          ) : null}
+          <Button variant="outline" size="sm" onClick={() => setExportDialogOpen(true)}>
+            <CalendarPlus className="h-4 w-4" />
+            Exportar
+          </Button>
+        </div>
       </div>
 
       {/* Desktop: semana/mês */}
@@ -337,6 +351,15 @@ export default function CalendarioPage() {
           onSubmit={submitCompleteReview}
         />
       ) : null}
+
+      <ExportCalendarDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        blocksInView={blocksInView}
+        subjects={subjects}
+        topics={topics}
+        reviews={reviews}
+      />
     </div>
   );
 }

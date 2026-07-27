@@ -19,6 +19,8 @@ create table public.profiles (
   display_name text,
   target_exam text,            -- concurso-alvo
   exam_date date,              -- para countdown
+  calendar_feed_token uuid not null unique default uuid_generate_v4(),  -- feed iCal público (fase 12), regenerável
+  calendar_feed_include_reviews boolean not null default false,
   created_at timestamptz default now()
 );
 
