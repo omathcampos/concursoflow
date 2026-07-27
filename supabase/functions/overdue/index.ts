@@ -8,7 +8,7 @@ import { getAdminClient, getUserFromAuthHeader, isCronAuthorized } from "../_sha
 import { sendEmail, sendTelegramMessage } from "../_shared/senders.ts";
 import type { NotificationPrefsRow } from "../_shared/types.ts";
 
-const SITE_URL = "https://concursoflow-alpha.vercel.app";
+const SITE_URL = "https://concursoflow.com";
 const MIN_INTERVAL_DAYS = 3;
 
 async function canSendNow(admin: ReturnType<typeof getAdminClient>, userId: string, channel: "email" | "telegram"): Promise<boolean> {

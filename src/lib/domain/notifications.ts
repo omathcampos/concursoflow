@@ -114,7 +114,7 @@ function escapeHtml(text: string): string {
 
 const BRAND_PURPLE = "#7c3aed";
 
-const LOGO_URL = "https://concursoflow-alpha.vercel.app/icon-192.png";
+const LOGO_URL = "https://concursoflow.com/icon-192.png";
 
 function emailShell(bodyHtml: string): string {
   return `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;margin:0 auto;color:#18181b;line-height:1.5;">
