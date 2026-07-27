@@ -1,0 +1,53 @@
+---
+title: Calendário
+description: Criar, mover e redimensionar blocos, recorrência semanal, tipos de estudo, concluir/pular e a versão mobile.
+---
+
+## Visões
+
+O Calendário tem duas visões no desktop — **Semana** e **Mês** — alternadas pelas abas no topo da página, além dos botões de navegação (anterior/hoje/próximo). No celular, a página mostra uma **agenda do dia**, navegável dia a dia.
+
+## Criar um bloco
+
+Clique em uma célula vazia no horário desejado (visão Semana) para abrir o formulário de novo bloco. Você escolhe:
+
+- **Matéria** (obrigatório).
+- **Tópico** (opcional, filtrado pelos tópicos da matéria escolhida).
+- **Tipo de estudo**: Teoria, Questões, Revisão, Lei seca ou Aula — cada um com uma cor/ícone próprio, usado também nas notificações e no feed exportado.
+- **Repetir semanalmente**: cria uma série de 8 ocorrências (mesma matéria, tipo e horário, uma por semana).
+
+O app **impede sobreposição**: se o horário escolhido colidir com um bloco existente, aparece um toast de erro e o bloco não é criado.
+
+## Mover e redimensionar
+
+Um bloco já criado pode ser:
+
+- **Arrastado** para outro dia/horário — a mudança persiste imediatamente.
+- **Redimensionado** pela borda inferior, pra ajustar a duração.
+
+Nos dois casos, a mesma checagem de sobreposição se aplica: não dá para arrastar um bloco em cima de outro.
+
+## Recorrência semanal
+
+Ao marcar "repetir semanalmente" na criação, o app cria a série inteira de uma vez (8 semanas à frente). Cada ocorrência é independente depois de criada — você pode mover ou concluir uma sem afetar as outras.
+
+Ao **excluir**, você escolhe o escopo:
+
+- **Só esta** — remove apenas a ocorrência selecionada.
+- **Esta e as futuras** — remove a ocorrência selecionada e todas as seguintes da mesma série (as passadas ficam intactas, preservando seu histórico).
+
+## Concluir ou pular
+
+Cada bloco tem três status: **planejado** (padrão), **concluído** e **pulado**. Ao marcar como concluído a partir de um bloco, o app abre o formulário de registro de sessão já pré-preenchido (matéria, tópico, tipo, horário) — você só confirma ou ajusta os detalhes (questões feitas, páginas lidas, etc.) e a sessão fica vinculada ao bloco.
+
+<Callout type="info">
+  Blocos de **teoria** concluídos com a opção de agendar revisão marcada geram automaticamente a fila de revisões espaçadas — veja [Revisões espaçadas](/docs/guia/revisoes-espacadas).
+</Callout>
+
+## No celular
+
+A agenda mobile mostra um dia por vez, com os mesmos blocos e ações (criar, concluir, pular) adaptados para toque. Navegue entre dias com as setas ou volte para "hoje" a qualquer momento.
+
+## Exportar
+
+Qualquer momento é um bom momento para assinar o calendário no Google Agenda, Apple Calendar ou Outlook — veja [Exportar calendário](/docs/guia/exportar-calendario).

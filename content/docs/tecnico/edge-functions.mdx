@@ -1,0 +1,67 @@
+---
+title: Edge Functions
+description: As 6 functions, o fluxo do cron, CORS, secrets, e a regra de duplicação Deno/app.
+---
+
+## As 6 functions
+
+Todas em `supabase/functions/`, rodando em Deno no runtime de Edge Functions do Supabase:
+
+| Function | Acesso | Disparo |
+|---|---|---|
+| `daily` | JWT do usuário (teste) ou cron | Lembrete diário — de hora em hora, filtra pela hora local de cada usuário |
+| `weekly` | JWT do usuário (teste) ou cron | Relatório semanal — diário, só processa quem é domingo no próprio fuso |
+| `overdue` | JWT do usuário (teste) ou cron | Alerta de revisões atrasadas — diário, no máx. 1x/3 dias por usuário/canal |
+| `telegram-webhook` | Pública (webhook do Telegram) | Vínculo/desvínculo de conta (`/start CÓDIGO`, `/stop`) |
+| `unsubscribe` | Pública (token, sem login) | Link no rodapé dos emails |
+| `calendar-feed` | Pública (token, sem login) | Assinatura de calendário — Google Agenda/Apple Calendar/Outlook |
+
+`daily`/`weekly`/`overdue` compartilham a mesma forma: um `Deno.serve` que, com `?test=true` + `Authorization: Bearer <jwt>`, processa só o usuário autenticado imediatamente (usado pelo botão "enviar agora" do Perfil); sem isso, exige o header `x-cron-secret` (chamado só pelo `pg_cron`) e processa todos os usuários com aquele tipo habilitado.
+
+## Fluxo do cron
+
+<Mermaid chart={`
+sequenceDiagram
+  participant Cron as pg_cron
+  participant Net as pg_net
+  participant Fn as Edge Function
+  participant DB as Postgres
+  participant Ext as Resend / Telegram
+
+  Cron->>Net: dispara no horário agendado
+  Net->>Fn: POST + header x-cron-secret
+  Fn->>DB: busca usuários com o tipo habilitado
+  loop por usuário
+    Fn->>DB: monta conteúdo (blocks/sessions/reviews)
+    Fn->>Ext: envia email e/ou Telegram
+    Fn->>DB: registra em notification_log
+  end
+  Fn-->>Net: 200 + resumo do processamento
+`} />
+
+Os três jobs (`notif-daily-hourly`, `notif-weekly-daily-check`, `notif-overdue-daily`) estão definidos numa migration que habilita `pg_cron`/`pg_net` e agenda os `net.http_post`. O valor do `x-cron-secret` não está no arquivo da migration — vem de `vault.decrypted_secrets`, inserido separadamente, pra nunca aparecer em texto plano no repositório público.
+
+## CORS
+
+`daily`/`weekly`/`overdue`/`unsubscribe` são chamadas direto do navegador (botões "enviar agora" no Perfil, página `/unsubscribe`). O preflight `OPTIONS` do navegador nunca manda `Authorization` — se cair na lógica normal de auth da function, volta `401` sem header de CORS, e o navegador bloqueia a requisição real antes mesmo dela sair. `supabase/functions/_shared/cors.ts` resolve isso: `handleCorsPreflight(req)` trata o `OPTIONS` **antes** de qualquer verificação de auth, e `corsJson(...)` injeta os headers de CORS em toda resposta.
+
+`calendar-feed` e `telegram-webhook` **não** usam esse helper — são consumidas por outro serviço (Google/Apple/Telegram fazendo a requisição do próprio backend deles), não por JavaScript rodando no navegador do usuário, então CORS não se aplica.
+
+## Isolamento entre canais
+
+Um detalhe de robustez em `daily`/`weekly`/`overdue`: o envio de email e o envio por Telegram, dentro do processamento de um mesmo usuário, estão em blocos `try/catch` **independentes**. Isso não é incidental — numa versão anterior, uma falha no envio de email (ex.: o provedor rejeitando o envio) abortava a função inteira antes de sequer tentar o Telegram, mesmo com os dois canais habilitados e sem relação um com o outro. Cada canal agora registra seu próprio erro sem impedir a tentativa do outro.
+
+## Secrets
+
+`RESEND_API_KEY`, `TELEGRAM_BOT_TOKEN` e `CRON_SECRET` vivem em `supabase secrets` — nunca em arquivo versionado. `SUPABASE_SERVICE_ROLE_KEY` e `SUPABASE_URL`/`SUPABASE_ANON_KEY` são injetados automaticamente pelo ambiente de toda Edge Function, sem precisar de configuração manual — uma das razões pela qual `calendar-feed` foi implementada como Edge Function em vez de rota do Next.js (veja [Stack e decisões](/docs/tecnico/stack-e-decisoes)).
+
+## A regra da duplicação Deno/app
+
+Deno não importa módulos do app Next.js diretamente. Toda lógica de negócio usada por uma Edge Function que também existe em `src/lib/domain/` (conteúdo/rate-limit de notificações, geração do `.ics`) tem uma **cópia mínima e documentada** em `supabase/functions/_shared/` (`content.ts`, `ical.ts`, etc.). Qualquer mudança de regra precisa refletir **nos dois lados** — é uma duplicação deliberada, não um descuido.
+
+<Callout type="warn" title="Deploy é um passo separado do git">
+  Fazer merge de uma mudança em `supabase/functions/**` para `master` **não** redeploya a Edge Function
+  automaticamente — só o frontend Next.js tem deploy automático via Vercel. Depois de qualquer mudança nessas
+  functions, é preciso um deploy explícito (`supabase functions deploy` ou a ferramenta equivalente); só depois
+  disso a mudança está de fato em produção.
+</Callout>

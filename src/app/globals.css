@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Sem fumadocs-ui/css/neutral.css de propósito — a paleta "neutral" genérica
+   do Fumadocs não usa nossos tokens (roxo da marca, zinc do resto do app) e
+   destoava visualmente do resto do produto. preset.css só traz estrutura/
+   tipografia/componentes gerados; as cores --color-fd-* são registradas
+   abaixo, no @theme inline, apontando pros MESMOS tokens do shadcn. */
+@import "fumadocs-ui/css/preset.css";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -46,6 +52,40 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* Fumadocs (fase 13): --color-fd-* aponta pros mesmos tokens do shadcn
+     acima — a doc usa a paleta real do app (roxo da marca, zinc), não o
+     tema "neutral" genérico do pacote. */
+  --color-fd-background: var(--background);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-popover: var(--popover);
+  --color-fd-popover-foreground: var(--popover-foreground);
+  --color-fd-card: var(--card);
+  --color-fd-card-foreground: var(--card-foreground);
+  --color-fd-border: var(--border);
+  --color-fd-primary: var(--primary);
+  --color-fd-primary-foreground: var(--primary-foreground);
+  --color-fd-secondary: var(--secondary);
+  --color-fd-secondary-foreground: var(--secondary-foreground);
+  --color-fd-accent: var(--accent);
+  --color-fd-accent-foreground: var(--accent-foreground);
+  --color-fd-ring: var(--ring);
+  --color-fd-overlay: color-mix(in srgb, var(--foreground) 20%, transparent);
+  /* Admonitions/callouts (<Callout type="info|warn|error|success">) e diffs
+     de código dos blocos MDX — não têm equivalente 1:1 no shadcn, então
+     usam os mesmos tons que o pacote definia por padrão. */
+  --color-fd-info: oklch(62.3% 0.214 259.815);
+  --color-fd-warning: var(--warning);
+  --color-fd-error: var(--destructive);
+  --color-fd-success: var(--success);
+  --color-fd-idea: oklch(70.5% 0.209 60.849);
+  --color-fd-diff-remove: rgba(200, 10, 100, 0.12);
+  --color-fd-diff-remove-symbol: rgb(230, 10, 100);
+  --color-fd-diff-add: rgba(14, 180, 100, 0.1);
+  --color-fd-diff-add-symbol: rgb(10, 200, 100);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -53,6 +93,31 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* @tailwindcss/typography (usado no preview markdown de Anotações e, sem
+   querermos, também no `.prose` que o Fumadocs DocsBody aplica no corpo dos
+   .mdx) vem com uma paleta cinza fixa própria (--tw-prose-*) que ignora
+   nosso dark mode — texto ficava cinza-escuro em cima de fundo escuro,
+   quase ilegível. Sobrescrevendo pros nossos tokens, os dois lugares que
+   usam `.prose` seguem a mesma paleta do resto do app nos dois temas. */
+.prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
 }
 
 :root {

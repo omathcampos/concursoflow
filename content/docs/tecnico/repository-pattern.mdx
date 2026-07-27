@@ -1,0 +1,64 @@
+---
+title: Repository Pattern
+description: A interface, as duas implementações, a regra síncrona/assíncrona, e como adicionar uma entidade nova passo a passo.
+---
+
+## A interface
+
+Tudo passa por `Repository` (`src/lib/data/repository.ts`):
+
+```ts
+export interface Repository {
+  subjects: CrudRepo<Subject, "id" | "createdAt">;
+  topics: CrudRepo<Topic, "id" | "createdAt">;
+  annotations: CrudRepo<Annotation, "id" | "createdAt" | "updatedAt">;
+  cycle: CycleRepo;
+  blocks: BlockRepo;
+  sessions: CrudRepo<Session, "id" | "createdAt">;
+  reviews: ReviewRepo;
+  profile: ProfileRepo;
+  notifications: NotificationsRepo;
+  calendarFeed: CalendarFeedRepo;
+}
+```
+
+A maioria das entidades usa o formato genérico `CrudRepo<T, Managed>`:
+
+```ts
+export interface CrudRepo<T, Managed extends keyof T> {
+  list(): T[];
+  get(id: string): T | undefined;
+  create(input: Omit<T, Managed>): Promise<T>;
+  update(id: string, patch: Partial<Omit<T, Managed>>): Promise<T>;
+  remove(id: string): Promise<void>;
+}
+```
+
+Entidades com comportamento extra (ex.: `blocks` precisa de `createSeries`/`removeSeries` pra recorrência, `reviews` precisa de `complete`/`skip`) estendem esse formato com métodos próprios.
+
+## A regra: leitura síncrona, mutação assíncrona
+
+`list()`, `get()` (e equivalentes como `entries()`/`getActive()` do ciclo) são **sempre síncronos**, nas duas implementações. `create`/`update`/`remove` são **sempre assíncronos** — fazem I/O de verdade e só então atualizam o cache que as leituras consultam. Veja o porquê completo em [Visão geral da arquitetura](/docs/tecnico/arquitetura).
+
+## `LocalRepository`
+
+`src/lib/data/local/local-repository.ts` — usada quando `NEXT_PUBLIC_DATA_SOURCE=local`. Cada leitura vem direto de um store Zustand (`src/lib/data/local/store.ts`), que já é síncrono; mutações chamam as ações do store e embrulham o resultado numa `Promise` já resolvida (sem I/O real).
+
+Funcionalidades que exigem um backend de verdade (ex.: vincular Telegram, enviar notificação de teste, gerar a URL do feed de calendário) simplesmente **lançam um erro amigável** nessa implementação — não existe um jeito local de simular um serviço externo.
+
+## `SupabaseRepository`
+
+`src/lib/data/supabase/repository.ts` — usada quando `NEXT_PUBLIC_DATA_SOURCE=supabase` (padrão, com fallback pra `local` se as credenciais não estiverem configuradas). Leituras vêm de um **cache reativo Zustand** (`cache-store.ts`), hidratado do banco no boot pelo `DataProvider` e realimentado a cada mutação bem-sucedida e no foco da janela (de forma **silenciosa** — sem remontar a UI, ver a nota sobre isso no histórico de fases). Mutações fazem a chamada real ao Supabase (`client.from(...).insert/update/delete`) e só então atualizam o cache com o resultado.
+
+Os mappers (`src/lib/data/supabase/mappers.ts`) fazem a conversão `snake_case` (linhas do Postgres) ↔ `camelCase` (domínio TypeScript) — um par `toXRow`/`fromXRow` por tabela.
+
+## Passo a passo: adicionando uma entidade nova
+
+1. **Tipo de domínio** em `src/lib/data/types.ts`.
+2. **Migration** criando a tabela (ou colunas), com RLS — registrar em `MIGRATIONS.md` no mesmo commit.
+3. **Mappers** em `src/lib/data/supabase/mappers.ts` (`toXRow`/`fromXRow`).
+4. **Interface do repo** em `src/lib/data/repository.ts` — `CrudRepo<T, Managed>` ou uma interface própria se precisar de métodos extras.
+5. **Adicionar ao `Repository`** principal (`repository.ts`) e implementar em **ambos** `LocalRepository` e `SupabaseRepository` — se a feature exigir backend real, a implementação local lança um erro amigável explicando isso.
+6. Se a entidade precisa aparecer no boot: adicionar ao `SupabaseCacheData` (`cache-store.ts`) e à hidratação (`hydrate.ts`), reaproveitando uma query já existente quando possível (ex.: colunas novas na mesma tabela `profiles` não pedem uma query extra).
+7. **UI**: usar sempre via `useRepo()` — nunca importar `LocalRepository`/`SupabaseRepository` diretamente num componente.
+8. Testes: domínio puro primeiro (TDD), depois e2e cobrindo o fluxo pela UI.

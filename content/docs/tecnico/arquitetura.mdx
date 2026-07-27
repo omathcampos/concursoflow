@@ -1,0 +1,46 @@
+---
+title: Visão geral da arquitetura
+description: Next.js → Repository → cache Zustand → Supabase; Edge Functions + pg_cron.
+---
+
+## Camadas
+
+O app segue uma arquitetura em camadas simples, com o **Repository Pattern** como fronteira central: a UI nunca fala diretamente com `localStorage` ou com o cliente Supabase — sempre através da interface `Repository`.
+
+<Mermaid chart={`
+graph TD
+  UI["Componentes React<br/>páginas, dialogs"] -->|useRepo| Repo["Repository interface"]
+  Repo -->|"DATA_SOURCE=local"| LocalRepo["LocalRepository"]
+  Repo -->|"DATA_SOURCE=supabase"| SupaRepo["SupabaseRepository"]
+  LocalRepo <--> LocalStore["Zustand store<br/>localStorage"]
+  SupaRepo -->|"mutações: I/O real"| DB[("Supabase Postgres<br/>Auth + RLS")]
+  SupaRepo <-->|"list/get síncronos"| Cache["Cache Zustand<br/>cache-store.ts"]
+  DB -.->|"hydrate: boot, mutação, focus"| Cache
+  Cron["pg_cron"] -->|"net.http_post"| EdgeFns["Edge Functions Deno<br/>daily, weekly, overdue,<br/>telegram-webhook, unsubscribe,<br/>calendar-feed"]
+  EdgeFns --> DB
+  EdgeFns --> Resend["Resend — email"]
+  EdgeFns --> Telegram["Telegram Bot API"]
+  Browser["Google Agenda<br/>Apple Calendar"] -->|"assina .ics"| EdgeFns
+`} />
+
+## Por que essa arquitetura
+
+O ponto central é o item mais citado neste repositório: **leitura síncrona, mutação assíncrona**. `list()`, `get()`, `entries()` e `getActive()` do `Repository` são **funções síncronas** nas duas implementações — o `LocalRepository` lê direto do Zustand (que já é síncrono por natureza, `localStorage` na memória), e o `SupabaseRepository` lê de um **cache reativo Zustand** próprio, nunca do banco diretamente numa leitura de render.
+
+Isso existe porque o app começou no modo `local` (fases 1–6, sem backend) com toda a UI escrita assumindo leitura síncrona. Quando o Supabase entrou (fase 7), a alternativa óbvia seria tornar `list()`/`get()` assíncronos — mas isso obrigaria reescrever a leitura de dados em **toda página já pronta**. Em vez disso, o `SupabaseRepository` hidrata um cache Zustand no boot (`DataProvider`) e o realimenta a cada mutação bem-sucedida e no foco da janela — mantendo a mesma interface síncrona que o resto do app já esperava. Trocar de `local` para `supabase` (ou vice-versa) não exige tocar em nenhuma página.
+
+## Edge Functions e o cron
+
+A partir da fase 10, `pg_cron` agenda três jobs que chamam Edge Functions via `net.http_post` (autenticadas por um secret compartilhado, `x-cron-secret`):
+
+- `notif-daily-hourly` — de hora em hora, filtra pela hora local configurada de cada usuário.
+- `notif-weekly-daily-check` — diário, só processa quem é domingo no fuso do usuário.
+- `notif-overdue-daily` — diário, alerta de revisões atrasadas (no máx. 1x a cada 3 dias por usuário/canal).
+
+Duas outras Edge Functions são públicas e acessadas direto pelo navegador ou por serviços externos, sem cron: `unsubscribe` (link nos emails) e `calendar-feed` (assinatura de calendário — veja [Edge Functions](/docs/tecnico/edge-functions)).
+
+## Próximas leituras
+
+- [Stack e decisões](/docs/tecnico/stack-e-decisoes) — o porquê de cada escolha tecnológica.
+- [Repository Pattern](/docs/tecnico/repository-pattern) — a interface completa e como adicionar uma entidade nova.
+- [Banco de dados](/docs/tecnico/banco-de-dados) — schema, RLS e migrations.

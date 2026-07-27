@@ -1,0 +1,37 @@
+---
+title: Testes
+description: Estratégia TDD, como rodar, estrutura dos e2e por fase, e cobertura.
+---
+
+## Estratégia
+
+**TDD é obrigatório** para o domínio: o teste é escrito antes da implementação, red → green → refactor. Todo arquivo em `src/lib/domain/*.ts` tem um `*.test.ts` co-localizado no mesmo diretório.
+
+Além do domínio, há testes unitários pontuais em pontos sensíveis da camada de dados — por exemplo `hydrate.test.ts` (comportamento silencioso do refetch por foco de janela) e `mappers.test.ts` (ida-e-volta `toXRow`/`fromXRow` sem perda de dado).
+
+## Como rodar
+
+```bash
+npm run test          # Vitest, roda uma vez
+npm run test:watch    # Vitest, modo watch
+npx vitest run --coverage   # cobertura — escopo src/lib/domain/**, alvo 100%
+npm run e2e            # Playwright, e2e/fase-XX-*.spec.ts
+npx tsc --noEmit        # type check
+npm run lint            # ESLint
+```
+
+**Regra do repositório: `lint` + `tsc` + `test` + `e2e` limpos antes de qualquer commit/PR.** Isso vale rodando a suíte e2e **completa**, não só a spec da fase que está em desenvolvimento — regressão em fases anteriores bloqueia o merge.
+
+## e2e por fase
+
+Cada fase do desenvolvimento tem seu próprio arquivo `e2e/fase-XX-nome.spec.ts`, cobrindo os critérios de aceite daquela fase especificamente. Fases posteriores não removem as specs anteriores — o histórico de e2e cresce e serve de suíte de regressão pra tudo que já foi entregue.
+
+A suíte roda por padrão em **modo `local`** (sem credenciais, sem backend real) — é assim que o CI consegue rodar sem segredos. Funcionalidades que só existem com backend real (Supabase) têm suas specs "gated" atrás de uma variável de ambiente (`SUPABASE_E2E`) e credenciais de contas de teste reais, puladas automaticamente quando essas variáveis não estão presentes (é o que aparece como "skipped" numa rodada normal de `npm run e2e`).
+
+<Callout type="info">
+  Ao rodar e2e localmente numa máquina de desenvolvimento que já tem um `.env.local` apontando pro Supabase real, force o modo local explicitamente: `NEXT_PUBLIC_DATA_SOURCE=local npm run e2e` — senão as specs em modo local caem na tela de login (redirecionadas pelo proxy) em vez de testar a UI de verdade.
+</Callout>
+
+## Cobertura
+
+O alvo de cobertura (100%) é escopado deliberadamente a `src/lib/domain/**` — é ali que mora toda a regra de negócio pura e testável de forma barata. UI e integração com Supabase são cobertas por e2e, não por cobertura de linha (testar componente React isoladamente com mocks pesados tende a dar falsa confiança nesse projeto).

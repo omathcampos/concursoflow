@@ -1,0 +1,46 @@
+---
+title: Exportar calendário
+description: Assinar o feed no Google Agenda e Apple Calendar, e como baixar um .ics avulso.
+---
+
+## Duas formas de exportar
+
+No [Calendário](/docs/guia/calendario), o botão **Exportar** abre um painel com duas opções:
+
+1. **Assinatura por URL** — uma URL própria e secreta que Google Agenda, Apple Calendar e Outlook conseguem "assinar" nativamente, atualizando sozinhos ao longo do tempo.
+2. **Baixar .ics** — um arquivo avulso com os blocos do período que está visível na tela (semana ou mês atual), pra importar manualmente uma vez.
+
+## Assinando no Google Agenda
+
+1. No painel Exportar, copie a URL do feed.
+2. No Google Agenda (versão web), vá em **Configurações → Adicionar agenda → Por URL**.
+3. Cole a URL e confirme.
+
+O Google passa a atualizar a agenda sozinho a cada algumas horas.
+
+## Assinando no Apple Calendar
+
+**No Mac:** Arquivo → Nova assinatura de calendário → cole a URL.
+
+**No iPhone/iPad:** Ajustes → Calendário → Contas → Adicionar Conta → Outra → Adicionar Assinatura de Calendário → cole a URL.
+
+## Assinando no Outlook
+
+Adicionar calendário → Assinar da web → cole a URL.
+
+<Callout type="warn" title="Atualização não é em tempo real">
+  Google, Apple e Outlook consultam feeds assinados a cada algumas horas — não segundos. Se você mover um bloco no
+  app, pode levar um tempo até refletir na agenda assinada. Para algo imediato, use o download avulso.
+</Callout>
+
+## A URL é secreta
+
+Qualquer pessoa com a URL do feed consegue ver o seu cronograma — trate como uma senha. Se desconfiar que ela vazou, use o botão **Regenerar URL** no painel Exportar: a URL antiga para de funcionar imediatamente, e você precisa assinar de novo com a nova em cada app onde já configurou.
+
+## Incluir revisões pendentes
+
+Um toggle no painel permite incluir suas revisões pendentes no feed como eventos de dia inteiro, além dos blocos normais do calendário.
+
+## Baixar .ics avulso
+
+O botão **Baixar .ics** gera um arquivo com os blocos do período visível no momento (a semana ou o mês que está na tela) e baixa direto — sem precisar de conta nem conexão com o backend. Funciona até no modo local/offline do app.

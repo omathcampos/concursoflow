@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap } from "lucide-react";
 import Link from "next/link";
 
 import { NavLinks } from "@/components/layout/nav-links";
@@ -14,6 +14,15 @@ export function AppSidebar() {
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-2">
         <NavLinks />
+      </div>
+      <div className="border-t border-sidebar-border px-3 py-2">
+        <Link
+          href="/docs"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-theme hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <BookOpen className="h-4 w-4 shrink-0" />
+          Documentação
+        </Link>
       </div>
     </aside>
   );

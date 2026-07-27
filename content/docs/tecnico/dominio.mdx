@@ -1,0 +1,92 @@
+---
+title: Domínio
+description: Cada módulo de lib/domain/ com assinatura, regras e exemplos — ciclo, revisões, streak, overlap, stats, ical, notifications.
+---
+
+Todo o `src/lib/domain/*.ts` é **função pura, sem I/O** — recebe dados, devolve dados, sem tocar em repositório, banco ou rede. Cada arquivo tem um `*.test.ts` co-localizado (TDD: teste escrito antes da implementação).
+
+## `cycle.ts`
+
+```ts
+suggestNextSubject(entries: CycleProgressEntry[]): string | null
+isCycleComplete(entries: CycleProgressEntry[]): boolean
+```
+
+`suggestNextSubject` escolhe a matéria com menor `doneMinutes / targetMinutes` entre as que ainda não bateram a meta; empate exato desempata pelo maior `weight`. Matérias com `targetMinutes` zero ficam de fora do cálculo. Ver [Ciclo de estudos](/docs/guia/ciclo-de-estudos) para a explicação funcional.
+
+## `reviews.ts`
+
+```ts
+scheduleFirstReview(input, from = new Date()): Omit<Review, "id" | "createdAt">
+nextReviewStep(review: Review, completedAt = new Date()): Omit<Review, "id" | "createdAt"> | null
+```
+
+`scheduleFirstReview` cria a revisão step 1 em D+1 a partir da sessão de teoria original. `nextReviewStep` calcula a próxima etapa (`STEP_OFFSET_DAYS = { 1: 7, 2: 30, 3: null }`) contando a partir de `completedAt` — a data real de conclusão, não a data de vencimento original, evitando acúmulo de atraso.
+
+## `blocks.ts`
+
+```ts
+detectOverlap(blocks: OverlapCandidate[], candidate: OverlapCandidate): boolean
+generateWeeklyOccurrences(startAt: string, endAt: string, count: number): WeeklyOccurrence[]
+```
+
+`detectOverlap` checa se o intervalo `[startAt, endAt)` do candidato colide com algum bloco existente (excluindo o próprio bloco, ao editar). `generateWeeklyOccurrences` gera `count` ocorrências (padrão 8) da mesma faixa de horário, uma por semana, usadas na criação de séries recorrentes.
+
+## `stats.ts`
+
+O módulo mais extenso — tudo que alimenta o [Dashboard](/docs/guia/dashboard):
+
+```ts
+minutesToday(sessions, now) / minutesThisWeek(sessions, now)
+weekOverWeekDelta(sessions, now): number | null
+accuracyLast30Days(sessions, now): number | null
+computeStreak(sessions, today): number
+hoursBySubject(sessions, subjects, period, now)
+hoursByDayLast14(sessions, subjects, now)
+weeklyEvolution(sessions, weeksCount = 12, now)
+studyTypeDistribution(sessions)
+questionsPerformanceBySubject(sessions, subjects)
+topOverdueSubjects(reviews, subjects, now, limit = 3)
+```
+
+`computeStreak` conta dias consecutivos com pelo menos uma sessão, andando pra trás a partir de hoje — **hoje sem sessão ainda não quebra o streak** (o dia atual só "conta contra" a partir da virada). `accuracyLast30Days` e `questionsPerformanceBySubject` só consideram sessões com `questionsTotal` preenchido (tipicamente sessões de Questões).
+
+## `timer.ts`
+
+```ts
+startTimer/pauseTimer/resumeTimer/stopTimer(timer, now)
+elapsedMs(timer, now): number
+formatElapsed(ms: number): string
+```
+
+Máquina de estados pura do cronômetro (`idle`/`running`/`paused`), independente da UI — o [modo foco](/docs/guia/sessoes-e-cronometro#modo-foco) e o widget compacto compartilham a mesma lógica. `formatElapsed` formata milissegundos como `HH:MM:SS`.
+
+## `notifications.ts`
+
+```ts
+shouldSendDaily/shouldSendWeekly/shouldSendOverdue(content): boolean
+canSendNotification(logs, type, channel, now): boolean
+isLinkCodeValid(linkCode, now): boolean
+renderDailyEmailHtml/renderWeeklyEmailHtml/renderOverdueEmailHtml(...)
+```
+
+As funções `shouldSendX` evitam notificação vazia (ex.: dia sem blocos nem revisões não dispara o lembrete diário). `canSendNotification` implementa o rate-limit: `daily`/`weekly` no máximo 1x por dia civil, `overdue` no máximo 1x a cada 3 dias, por tipo+canal. As funções `renderXHtml` montam o HTML dos emails.
+
+<Callout type="warn" title="Duplicação deliberada">
+  Deno (runtime das Edge Functions) não importa módulos do app Next.js diretamente. `notifications.ts` e `ical.ts`
+  têm uma cópia mínima e documentada em `supabase/functions/_shared/`. Qualquer mudança de regra de negócio nessas
+  funções precisa refletir **nos dois lados** — ver [Edge Functions](/docs/tecnico/edge-functions).
+</Callout>
+
+## `ical.ts`
+
+```ts
+filterBlocksForFeed(blocks, now): T[]
+buildICalFeed(blocks: ICalBlock[], subjects: ICalSubject[], opts): string
+```
+
+Gera o `.ics` (RFC 5545) usado no [feed de calendário exportado](/docs/guia/exportar-calendario). `filterBlocksForFeed` restringe a janela a -30/+90 dias a partir de `now`. `buildICalFeed` cuida de: escaping de `,`/`;`/`\`/quebra de linha, *line folding* em 75 octetos (sempre em fronteira de code point, nunca no meio de um caractere multi-byte UTF-8), `CRLF` em toda quebra de linha, `UID` estável por bloco, e `DTSTART`/`DTEND` sempre em UTC (ver [Stack e decisões](/docs/tecnico/stack-e-decisoes#feed-ical-em-utc-sem-vtimezone)).
+
+## `session-validation.ts`, `auth-validation.ts`, `profile-display.ts`
+
+Schemas Zod e helpers pequenos de validação/formatação (ex.: `initialsFor` — iniciais do avatar a partir do nome ou email) — sem regra de negócio complexa o suficiente pra render sua própria seção aqui; ver o código-fonte diretamente.

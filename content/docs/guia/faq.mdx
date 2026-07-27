@@ -1,0 +1,24 @@
+---
+title: FAQ
+description: Fuso horário, dados offline vs. nuvem, privacidade (RLS) e limites conhecidos.
+---
+
+## Fuso horário
+
+Os horários de blocos e sessões são salvos como um instante único (UTC) e exibidos no fuso do seu navegador/dispositivo — então mudar de fuso não bagunça o que já foi agendado. Já os horários de **notificações** (lembrete diário, relatório semanal) seguem especificamente o fuso que você configurou no Perfil, não o do navegador no momento do envio — confira se está certo em [Notificações](/docs/guia/notificacoes).
+
+## Meus dados ficam offline ou na nuvem?
+
+Por padrão, o ConcursoFlow usa um backend real (Supabase): seus dados ficam salvos na nuvem, sincronizados entre dispositivos, e sobrevivem a limpar o cache do navegador. Existe também um modo local (usado principalmente em desenvolvimento/testes), que guarda tudo só no navegador (`localStorage`) — sem conta, sem sincronização, mas também sem persistência garantida entre dispositivos ou depois de limpar os dados do site.
+
+## Meus dados são privados?
+
+Sim. O banco de dados usa **Row Level Security (RLS)** do PostgreSQL: cada tabela tem uma política que restringe toda leitura e escrita ao próprio usuário autenticado (`auth.uid()`), aplicada no nível do banco — não é uma checagem só na interface que poderia ser contornada. Ninguém mais vê suas matérias, sessões, anotações ou preferências, nem outro usuário logado no mesmo app.
+
+As únicas exceções deliberadas são rotas públicas por token opaco (não pelo seu ID de usuário): o link de **cancelar inscrição** de notificações e a **URL do feed de calendário exportado** — cada uma dá acesso só ao recurso específico daquele token, nunca à sua conta.
+
+## Limites conhecidos
+
+- **Envio de email**: o provedor (Resend) roda com domínio próprio verificado (`concursoflow.com`) — sem a restrição de sandbox de contas de teste. Se você notar emails de notificação não chegando, confira antes se o endereço cadastrado na conta está correto e olhe a caixa de spam.
+- **Feed de calendário exportado**: como qualquer feed iCal assinado, a atualização em Google/Apple/Outlook não é instantânea (veja [Exportar calendário](/docs/guia/exportar-calendario)).
+- **Recorrência semanal**: ao criar uma série recorrente, o app gera 8 semanas de ocorrências de uma vez — para estender além disso, crie uma nova série a partir da última ocorrência.
