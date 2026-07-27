@@ -16,7 +16,13 @@ function extractToken(url: URL): string | null {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+  // HEAD também precisa responder: Apple Calendar (CalendarAgent) e o
+  // validador do Google Agenda fazem um HEAD antes do GET pra checar se a
+  // URL é válida — recusar com 405 fazia os dois desistirem antes de tentar
+  // buscar o .ics de verdade ("A validação falhou" / "Ops, não foi possível
+  // adicionar esta agenda").
+  const isHead = req.method === "HEAD";
+  if (req.method !== "GET" && !isHead) return new Response("Method Not Allowed", { status: 405 });
 
   const url = new URL(req.url);
   const token = extractToken(url);
@@ -87,7 +93,7 @@ Deno.serve(async (req: Request) => {
     now,
   });
 
-  return new Response(ics, {
+  return new Response(isHead ? null : ics, {
     status: 200,
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
