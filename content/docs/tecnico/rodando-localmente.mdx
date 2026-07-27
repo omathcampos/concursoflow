@@ -1,0 +1,50 @@
+---
+title: Rodando localmente
+description: Setup completo, variáveis de ambiente, e a diferença entre DATA_SOURCE local e supabase.
+---
+
+## Setup
+
+```bash
+git clone https://github.com/omathcampos/concursoflow.git
+cd concursoflow
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+
+O app sobe em `http://localhost:3000`, com Turbopack.
+
+## `local` vs. `supabase`
+
+A variável `NEXT_PUBLIC_DATA_SOURCE` decide qual implementação do `Repository` a UI usa:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_DATA_SOURCE=supabase   # ou "local"
+```
+
+- **`supabase`** (padrão) — backend real, precisa das duas variáveis do Supabase preenchidas. Sem elas, o app **cai automaticamente para `local`**.
+- **`local`** — tudo em `localStorage`, via Zustand, sem rede, sem login. Útil pra desenvolver UI sem depender de um projeto Supabase configurado, e é o modo em que a suíte e2e roda por padrão no CI.
+
+<Callout type="warn">
+  Rodando e2e numa máquina que já tem um `.env.local` real, force `local` explicitamente:
+  `NEXT_PUBLIC_DATA_SOURCE=local npm run e2e` — senão a suíte local cai na tela de login em vez de testar a UI.
+</Callout>
+
+## Edge Functions localmente
+
+As Edge Functions (`supabase/functions/`) usam a Supabase CLI (via `npx supabase`) pra desenvolvimento e deploy — não fazem parte do `npm run dev` do Next.js. `supabase/functions/deno.json` existe só pra o `deno check` local reconhecer o global `Deno`; ele não deve ser incluído no deploy remoto (ver [Edge Functions](/docs/tecnico/edge-functions) para os detalhes de deploy).
+
+## Comandos úteis
+
+```bash
+npm run lint            # ESLint
+npx tsc --noEmit         # type check
+npm run test             # Vitest
+npm run e2e               # Playwright
+npm run build              # build de produção
+```
+
+Ver [Testes](/docs/tecnico/testes) para a regra completa de verificação antes de commitar.

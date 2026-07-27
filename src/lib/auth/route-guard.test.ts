@@ -35,4 +35,11 @@ describe("resolveAuthRedirect", () => {
     expect(resolveAuthRedirect("/unsubscribe", false)).toBeNull();
     expect(resolveAuthRedirect("/unsubscribe", true)).toBeNull();
   });
+
+  it("/docs nunca redireciona, com ou sem sessão (documentação é pública)", () => {
+    expect(resolveAuthRedirect("/docs", false)).toBeNull();
+    expect(resolveAuthRedirect("/docs", true)).toBeNull();
+    expect(resolveAuthRedirect("/docs/guia/introducao", false)).toBeNull();
+    expect(resolveAuthRedirect("/docs/tecnico/arquitetura", true)).toBeNull();
+  });
 });

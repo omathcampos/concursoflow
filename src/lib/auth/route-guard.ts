@@ -11,9 +11,13 @@ const RECOVERY_ROUTE = "/recuperar-senha";
 /**
  * /unsubscribe é acessada a partir do link no rodapé dos emails — precisa
  * funcionar tanto sem sessão quanto com (usuário logado clicando no link),
- * então nunca redireciona, em nenhum dos dois sentidos.
+ * então nunca redireciona, em nenhum dos dois sentidos. /docs (Fumadocs,
+ * fase 13) é documentação pública — mesma regra, nunca redireciona.
+ * /api/search é a rota de busca do Fumadocs, chamada via fetch pela própria
+ * página /docs — sem essa exceção, o proxy redireciona a chamada de busca
+ * (não a navegação) para /login, e a caixa de busca nunca mostra resultado.
  */
-const NEUTRAL_ROUTES = ["/unsubscribe"];
+const NEUTRAL_ROUTES = ["/unsubscribe", "/docs", "/api/search"];
 
 /** Decide o redirect (ou null) para o middleware, dado o pathname e se há sessão ativa. Função pura — testável sem Next.js/Supabase. */
 export function resolveAuthRedirect(pathname: string, hasSession: boolean): string | null {

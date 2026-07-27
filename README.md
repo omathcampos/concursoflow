@@ -4,7 +4,7 @@
 
 > Feito para quem estuda com Tec Concursos (questões) e Estratégia Concursos (aulas/PDFs) — mas serve para qualquer rotina de estudos.
 
-**🔗 [App em produção](https://concursoflow-alpha.vercel.app)**
+**🔗 [App em produção](https://concursoflow.com)** · **📖 [Documentação](https://concursoflow.com/docs)**
 
 ![Dashboard do ConcursoFlow](./public/screenshot-dashboard.png)
 ![Calendário do ConcursoFlow](./public/screenshot-calendario.png)
@@ -61,6 +61,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 10 — Notificações email + Telegram (v1.2.0): lembrete diário, relatório semanal, alerta de revisões atrasadas
 - [x] Fase 11 — Melhorias (v1.2.0): anotações e observações já entregues na Fase 2; modo foco em tela cheia do cronômetro com Wake Lock
 - [x] Fase 12 — Exportar calendário: feed iCal (.ics) por assinatura (Google Agenda/Apple Calendar/Outlook) + download avulso
+- [x] Fase 13 — Documentação: guia do usuário e referência técnica em [/docs](https://concursoflow.com/docs) (Fumadocs)
 
 **Backlog futuro:** anexar arquivos (PDFs, resumos, imagens) a matérias/tópicos/sessões via Supabase Storage.
 

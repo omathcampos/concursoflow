@@ -1,0 +1,37 @@
+---
+title: Ciclo de estudos
+description: Como funciona a sugestão "estude agora", rodadas, e boas práticas de carga horária.
+---
+
+## O que é o ciclo
+
+O ciclo de estudos é um rodízio entre as matérias do seu edital, cada uma com uma **meta de horas** pra rodada atual. Em vez de você decidir "o que estudo hoje?" no improviso, o app sugere sempre a matéria que está **mais atrasada em relação à própria meta**.
+
+## Como a sugestão funciona
+
+A cada matéria do ciclo, o app calcula a proporção:
+
+```
+progresso = horas já estudadas na rodada / meta de horas da rodada
+```
+
+A matéria sugerida é sempre a de **menor progresso**. Em caso de empate exato, desempata pelo **maior peso** (o peso que você definiu ao cadastrar a matéria, 1 a 5). Matérias sem meta definida, ou que já bateram a meta, saem da disputa.
+
+Isso significa: se Direito Constitucional tem meta de 10h e você já estudou 8h (80%), mas Português tem meta de 6h e você só estudou 1h (17%), o app sugere Português — mesmo que Constitucional tenha peso maior — porque Português está proporcionalmente mais atrasado.
+
+<Callout type="idea">
+  A lógica é sempre por **proporção**, não por horas absolutas. Isso evita que uma matéria com meta grande "monopolize" as sugestões só por ter mais horas faltando.
+</Callout>
+
+## Rodadas
+
+Uma **rodada** é um ciclo completo: cada matéria bate sua meta de horas pelo menos uma vez. Quando todas as matérias do ciclo atingem a meta, o app sinaliza que a rodada está completa e você pode **iniciar uma nova rodada**.
+
+Ao iniciar uma nova rodada, as horas "zeram" para efeito do cálculo de progresso — as sessões antigas continuam no seu histórico (e contam pro Dashboard, streak, etc.), só não contam mais pra meta da rodada atual.
+
+## Boas práticas de carga horária
+
+- **Metas realistas**: comece com metas semanais/quinzenais que você consegue cumprir de verdade. É melhor ajustar pra cima depois do que desanimar por nunca bater a meta.
+- **Pesos refletindo o edital**: dê peso maior às matérias com mais questões/pontos no edital do seu concurso — isso não muda a meta em si, só desempata sugestões quando duas matérias estão igualmente atrasadas.
+- **Revise as metas a cada rodada nova**: se uma matéria sempre sobra tempo e outra nunca é suficiente, ajuste as metas na próxima rodada em vez de forçar o ritmo na atual.
+- **Combine com o Calendário**: o ciclo sugere *o quê* estudar; o [Calendário](/docs/guia/calendario) organiza *quando*. Uma boa prática é agendar blocos alinhados com o que o ciclo está sugerindo naquele momento.

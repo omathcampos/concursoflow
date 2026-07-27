@@ -1,0 +1,36 @@
+---
+title: Notificações
+description: Lembrete diário, relatório semanal e alerta de atrasadas por email e Telegram — como configurar, vincular o bot e cancelar.
+---
+
+## Os três tipos de notificação
+
+Configuráveis na página **Perfil**, seção Notificações:
+
+- **Lembrete diário** — blocos agendados para o dia e revisões pendentes. Você escolhe o horário (qualquer hora cheia) e o fuso horário. Só é enviado se houver algo pra mostrar naquele dia (sem spam de "você não tem nada hoje").
+- **Relatório semanal** — enviado aos domingos: horas estudadas na semana (com variação em relação à anterior), % de acerto, streak e as matérias mais atrasadas em revisões.
+- **Alerta de revisões atrasadas** — dispara quando há revisões vencidas há 2 dias ou mais, no máximo uma vez a cada 3 dias por canal (pra não incomodar repetidamente pelo mesmo atraso).
+
+## Canais: email e Telegram
+
+Cada tipo de notificação pode ser enviado por **email**, **Telegram**, ou os dois — habilite os canais independentemente na seção Notificações do Perfil.
+
+### Vincular o Telegram
+
+1. Clique em **Vincular Telegram** no Perfil — o app gera um código de uso único, válido por 10 minutos.
+2. Abra o Telegram e envie `/start CÓDIGO` para o bot do ConcursoFlow (ou use o link direto que o app mostra).
+3. Volte ao Perfil e clique em **"Já vinculei, atualizar status"** — o app confirma o vínculo e passa a habilitar o canal.
+
+Pra desvincular, use o botão **Desvincular** — o chat ID salvo é apagado e o canal Telegram é desativado automaticamente.
+
+## Testar o envio
+
+O botão **"Enviar agora (teste)"** dispara qualquer um dos três tipos imediatamente pelos canais habilitados, ignorando o horário configurado e a checagem de "tem algo pra mostrar" — útil pra confirmar que email e Telegram estão chegando direitinho antes de contar com o envio automático.
+
+## Cancelar inscrição
+
+Todo email de notificação tem um link de **cancelar inscrição** no rodapé — funciona sem precisar estar logado, e desliga só aquele tipo específico de notificação (você pode reativar a qualquer momento na página Perfil).
+
+<Callout type="warn">
+  Os horários dos envios automáticos seguem o **fuso horário que você configurou** no Perfil, não o fuso do servidor. Confira se está correto, especialmente se você mudar de cidade/fuso.
+</Callout>

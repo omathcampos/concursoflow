@@ -1,0 +1,85 @@
+---
+title: Banco de dados
+description: Schema com diagrama ER, RLS, triggers, e a política de migrations.
+---
+
+## Diagrama ER
+
+<Mermaid chart={`
+erDiagram
+  profiles ||--o{ subjects : "user_id"
+  profiles ||--o{ blocks : "user_id"
+  profiles ||--o{ sessions : "user_id"
+  profiles ||--o{ reviews : "user_id"
+  profiles ||--o{ annotations : "user_id"
+  profiles ||--o| notification_prefs : "user_id"
+  subjects ||--o{ topics : "subject_id"
+  subjects ||--o{ blocks : "subject_id"
+  subjects ||--o{ sessions : "subject_id"
+  subjects ||--o{ reviews : "subject_id"
+  topics ||--o{ blocks : "topic_id (opcional)"
+  cycles ||--o{ cycle_entries : "cycle_id"
+  subjects ||--o{ cycle_entries : "subject_id"
+  blocks ||--o| sessions : "block_id (opcional)"
+  sessions ||--o| reviews : "session_id (opcional)"
+  profiles {
+    uuid id PK
+    text display_name
+    text target_exam
+    date exam_date
+    uuid calendar_feed_token
+    boolean calendar_feed_include_reviews
+  }
+  subjects {
+    uuid id PK
+    uuid user_id FK
+    text name
+    text color
+    int weight
+  }
+  blocks {
+    uuid id PK
+    uuid user_id FK
+    uuid subject_id FK
+    uuid topic_id FK
+    block_type type
+    block_status status
+    timestamptz start_at
+    timestamptz end_at
+  }
+  reviews {
+    uuid id PK
+    uuid user_id FK
+    uuid subject_id FK
+    int step
+    date due_date
+    review_status status
+  }
+`} />
+
+## Tabelas
+
+Schema completo em `docs/03-schema.sql`. As tabelas principais: `profiles` (1:1 com `auth.users`), `subjects`, `topics`, `cycles` + `cycle_entries`, `blocks`, `sessions`, `reviews`, `annotations` — todas com `user_id uuid not null references auth.users(id) on delete cascade`. A partir da fase 10: `notification_prefs`, `notification_log`, `telegram_link_codes`.
+
+Enums: `topic_status`, `block_type` (`teoria`/`questoes`/`revisao`/`lei_seca`/`aula`), `block_status` (`planned`/`done`/`skipped`), `review_status` (`pending`/`done`/`skipped`).
+
+## RLS (Row Level Security)
+
+Toda tabela com dado de usuário tem RLS habilitado, com política `auth.uid() = user_id` cobrindo `select`/`insert`/`update`/`delete`. Isso significa que mesmo um bug na camada de aplicação **não conseguiria** vazar dados de outro usuário — a restrição é aplicada pelo Postgres, não pela query que a aplicação escolhe montar.
+
+Duas exceções deliberadas, sempre acessadas via **service role** (que ignora RLS) dentro de uma Edge Function, nunca pelo cliente do navegador:
+
+- `unsubscribe_token` em `notification_prefs` — o endpoint `unsubscribe` busca a linha por token, não por `auth.uid()`.
+- `calendar_feed_token` em `profiles` — o endpoint `calendar-feed` busca o perfil por token, não por sessão.
+
+## Triggers
+
+`handle_new_user()` — dispara em `on_auth_user_created` (Supabase Auth) e cria automaticamente a linha correspondente em `profiles` (e, desde a fase 10, também em `notification_prefs` com os defaults) no momento do cadastro. A função tem `search_path = ''` fixado e `EXECUTE` revogado de `public`/`anon`/`authenticated` — só o próprio trigger do Postgres pode chamá-la, nunca via `/rest/v1/rpc/handle_new_user` direto.
+
+Uma função auxiliar, `notif_local_bounds(timezone, now)`, calcula em SQL (mais confiável que reimplementar em TypeScript) as fronteiras de dia/semana no fuso de cada usuário, convertidas para UTC — usada pelas Edge Functions de notificação pra filtrar blocos/sessões/revisões pelo fuso correto. Só `service_role` pode executá-la.
+
+## Migrations
+
+Toda mudança de schema é uma **migration versionada** (`supabase migration new nome`), nunca SQL avulso rodado direto no dashboard. Cada migration é registrada em `MIGRATIONS.md` no mesmo commit: arquivo, descrição, data, ambiente e a fase correspondente. Migrations aplicadas são **imutáveis** — uma correção sempre vira uma migration nova, nunca uma edição retroativa de uma já aplicada.
+
+Segredos (`RESEND_API_KEY`, `TELEGRAM_BOT_TOKEN`, `CRON_SECRET`) nunca entram em arquivo de migration versionado — vivem em `supabase secrets` ou, no caso do `CRON_SECRET` referenciado pelo agendamento do `pg_cron`, em `vault.decrypted_secrets`.

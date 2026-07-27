@@ -1,0 +1,16 @@
+{
+  "title": "Referência técnica",
+  "icon": "Code",
+  "pages": [
+    "arquitetura",
+    "stack-e-decisoes",
+    "repository-pattern",
+    "dominio",
+    "banco-de-dados",
+    "edge-functions",
+    "testes",
+    "git-flow-e-releases",
+    "rodando-localmente",
+    "historico-de-fases"
+  ]
+}

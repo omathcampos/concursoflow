@@ -1,0 +1,17 @@
+{
+  "title": "Guia do usuário",
+  "icon": "BookOpen",
+  "pages": [
+    "introducao",
+    "primeiros-passos",
+    "ciclo-de-estudos",
+    "calendario",
+    "sessoes-e-cronometro",
+    "revisoes-espacadas",
+    "dashboard",
+    "anotacoes",
+    "notificacoes",
+    "exportar-calendario",
+    "faq"
+  ]
+}
