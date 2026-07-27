@@ -19,6 +19,7 @@ Botão "Exportar dados" que gera um **.xlsx** (multi-abas, formatado) ou **.csv*
 3. **Blocos** — data, horário início/fim, matéria, tópico, tipo, status (planejado/concluído/pulado), recorrente (sim/não).
 4. **Revisões** — matéria, tópico, etapa (24h/7d/30d), data prevista, status, data de conclusão, dias de atraso.
 5. **Evolução semanal** — uma linha por semana: horas totais, horas por matéria (colunas), questões, % acerto.
+6. **Grade do calendário** — o calendário em formato visual de grade, uma seção por semana do período exportado: colunas seg→dom, linhas de horário (só a faixa com blocos, ex.: 19h–23h + sábado de manhã), cada célula com "Matéria — tipo" e cor de fundo da matéria (fill do SheetJS); blocos concluídos com ✓, pulados tachados. Linha extra "Revisões" no topo de cada dia com as revisões devidas. É a versão imprimível do cronograma — algo que dá para colar na parede.
 
 Formatação mínima: cabeçalhos em negrito com filtro automático, larguras razoáveis, datas como data de verdade (não texto), % como percentual. Nomes de abas e cabeçalhos em pt-BR.
 
@@ -31,7 +32,8 @@ Formatação mínima: cabeçalhos em negrito com filtro automático, larguras ra
 - **Ao final**: `e2e/fase-14-export.spec.ts` — dialog abre, download dispara e o arquivo baixado é um xlsx válido com as abas certas (validar no teste com o próprio SheetJS lendo o arquivo). Regressão: suíte completa verde.
 
 ## Critérios de aceite
-- [ ] .xlsx abre no Excel/Google Sheets/LibreOffice com as 5 abas, cabeçalhos e formatação corretos, acentos ok.
+- [ ] .xlsx abre no Excel/Google Sheets/LibreOffice com as 6 abas, cabeçalhos e formatação corretos, acentos ok.
+- [ ] Grade do calendário legível e com as cores das matérias; semanas do período todas presentes; imprimível em A4 paisagem sem cortar colunas (configurar print area/escala na aba).
 - [ ] Números batem com o dashboard (conferir horas e % de acerto de uma matéria manualmente).
 - [ ] Seletor de período filtra corretamente; .csv gera arquivos válidos.
 - [ ] SheetJS carregado só sob demanda (verificar no bundle/network).
