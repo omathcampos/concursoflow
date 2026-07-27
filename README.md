@@ -62,6 +62,7 @@ O desenvolvimento segue fases documentadas em [`PLANO.md`](./PLANO.md) e `prompt
 - [x] Fase 11 — Melhorias (v1.2.0): anotações e observações já entregues na Fase 2; modo foco em tela cheia do cronômetro com Wake Lock
 - [x] Fase 12 — Exportar calendário: feed iCal (.ics) por assinatura (Google Agenda/Apple Calendar/Outlook) + download avulso
 - [x] Fase 13 — Documentação: guia do usuário e referência técnica em [/docs](https://concursoflow.com/docs) (Fumadocs)
+- [x] Fase 14 — Exportar dados: planilha .xlsx multi-abas (ou .csv) com sessões, blocos, revisões, evolução semanal e grade do cronograma
 
 **Backlog futuro:** anexar arquivos (PDFs, resumos, imagens) a matérias/tópicos/sessões via Supabase Storage.
 
