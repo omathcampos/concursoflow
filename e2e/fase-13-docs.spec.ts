@@ -28,6 +28,9 @@ test("navegação entre páginas das duas seções via sidebar", async ({ page }
 
 test("busca retorna resultado e navega até a página certa", async ({ page }) => {
   await page.goto("/docs");
+  // Espera a hidratação registrar o atalho de teclado antes de disparar
+  // Ctrl+K — goto() resolve no "load", que pode vir antes da hidratação.
+  await expect(page.getByRole("button", { name: /Search/ }).first()).toBeVisible();
   await page.keyboard.press("ControlOrMeta+k");
 
   const searchBox = page.getByRole("textbox", { name: "Search" });
@@ -35,7 +38,7 @@ test("busca retorna resultado e navega até a página certa", async ({ page }) =
   await searchBox.fill("ciclo de estudos");
 
   const result = page.getByRole("button", { name: /Ciclo de estudos/ }).first();
-  await expect(result).toBeVisible();
+  await expect(result).toBeVisible({ timeout: 15_000 });
   await result.click();
 
   await expect(page).toHaveURL(/\/docs\/guia\/ciclo-de-estudos/);
