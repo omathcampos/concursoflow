@@ -5,6 +5,7 @@ import { useSupabaseCache } from "@/lib/data/supabase/cache-store";
 import {
   fromAnnotationRow,
   fromBlockRow,
+  fromCalendarFeedRow,
   fromCycleEntryRow,
   fromCycleRow,
   fromNotificationPrefsRow,
@@ -26,7 +27,17 @@ import {
 } from "@/lib/data/supabase/mappers";
 import { generateWeeklyOccurrences } from "@/lib/domain/blocks";
 import { nextReviewStep, scheduleFirstReview } from "@/lib/domain/reviews";
-import type { BlockRepo, CrudRepo, CycleRepo, NotificationsRepo, NotificationTestResult, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
+import type {
+  BlockRepo,
+  CalendarFeedRepo,
+  CrudRepo,
+  CycleRepo,
+  NotificationsRepo,
+  NotificationTestResult,
+  ProfileRepo,
+  Repository,
+  ReviewRepo,
+} from "@/lib/data/repository";
 import type { Annotation, Cycle, Profile, Session, Subject, Topic } from "@/lib/data/types";
 
 /** Código curto (sem caracteres ambíguos) pro fluxo `/start CODIGO` do bot do Telegram. */
@@ -468,5 +479,35 @@ export function createSupabaseRepository(client: SupabaseClient, userId: string)
       }, "Não foi possível enviar a notificação de teste."),
   };
 
-  return { subjects, topics, annotations, cycle, blocks, sessions, reviews, profile, notifications };
+  const calendarFeed: CalendarFeedRepo = {
+    get: () => cache().calendarFeed,
+    regenerateToken: () =>
+      withErrorToast(async () => {
+        const { data, error } = await client
+          .from("profiles")
+          .update({ calendar_feed_token: crypto.randomUUID() })
+          .eq("id", userId)
+          .select("calendar_feed_token, calendar_feed_include_reviews")
+          .single();
+        if (error) throw error;
+        const feed = fromCalendarFeedRow(data);
+        setCache({ calendarFeed: feed });
+        return feed;
+      }, "Não foi possível gerar uma nova URL do feed."),
+    setIncludeReviews: (value) =>
+      withErrorToast(async () => {
+        const { data, error } = await client
+          .from("profiles")
+          .update({ calendar_feed_include_reviews: value })
+          .eq("id", userId)
+          .select("calendar_feed_token, calendar_feed_include_reviews")
+          .single();
+        if (error) throw error;
+        const feed = fromCalendarFeedRow(data);
+        setCache({ calendarFeed: feed });
+        return feed;
+      }, "Não foi possível salvar a preferência de revisões no feed."),
+  };
+
+  return { subjects, topics, annotations, cycle, blocks, sessions, reviews, profile, notifications, calendarFeed };
 }

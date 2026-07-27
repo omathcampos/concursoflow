@@ -1,7 +1,8 @@
-import type { BlockRepo, CrudRepo, CycleRepo, NotificationsRepo, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
+import type { CalendarFeedRepo, BlockRepo, CrudRepo, CycleRepo, NotificationsRepo, ProfileRepo, Repository, ReviewRepo } from "@/lib/data/repository";
 import type { LocalState } from "@/lib/data/local/store";
 
 const SUPABASE_ONLY_ERROR = "Notificações por email/Telegram exigem o backend Supabase — indisponível no modo local.";
+const CALENDAR_FEED_SUPABASE_ONLY_ERROR = "O feed de assinatura do calendário exige o backend Supabase — indisponível no modo local.";
 
 // As ações do Zustand store são síncronas por natureza (localStorage), mas o
 // Repository exige mutações async (ver repository.ts) — aqui só embrulhamos
@@ -106,5 +107,14 @@ export function createLocalRepository(state: LocalState): Repository {
         throw new Error(SUPABASE_ONLY_ERROR);
       },
     } satisfies NotificationsRepo,
+    calendarFeed: {
+      get: () => undefined,
+      regenerateToken: async () => {
+        throw new Error(CALENDAR_FEED_SUPABASE_ONLY_ERROR);
+      },
+      setIncludeReviews: async () => {
+        throw new Error(CALENDAR_FEED_SUPABASE_ONLY_ERROR);
+      },
+    } satisfies CalendarFeedRepo,
   };
 }
