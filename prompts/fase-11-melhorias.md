@@ -3,7 +3,7 @@
 ## Contexto
 Fases 0–10 concluídas. Esta fase agrupa melhorias definidas durante o desenvolvimento (leia RF09 em `docs/01-requisitos.md`). O schema já tem a tabela `annotations` e as colunas `notes` em subjects/topics (criadas na migration inicial da fase 7 — conferir; se o banco foi criado antes dessas colunas, criar migration nova e registrar no `MIGRATIONS.md`).
 
-> ⚠️ Operações Supabase apenas na ref do projeto criado na fase 7.
+> ⚠️ Operações Supabase apenas na ref `apceuvnqnrxfoongjvxq` (projeto ConcursoFlow).
 
 ## Objetivo
 Caderno de anotações em markdown, campos de observações em matérias/tópicos e modo foco em tela cheia para o cronômetro.
