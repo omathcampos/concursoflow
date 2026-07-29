@@ -21,7 +21,9 @@ import {
 import type { Block, Review, Subject } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
 
-const HOUR_MARKS = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR }, (_, i) => DAY_START_HOUR + i);
+// +1 pra incluir o rótulo final (24:00/meia-noite) — sem ele, a grade
+// parecia parar às 23:00 mesmo tendo mais uma hora de linhas abaixo.
+const HOUR_MARKS = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i);
 
 interface WeekGridProps {
   weekStart: Date;

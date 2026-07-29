@@ -15,6 +15,18 @@ function todayColumn(page: Page) {
   return page.locator(`[data-testid="calendar-column-${today}"]`);
 }
 
+/** Primeira coluna da semana renderizada que não é a de hoje — nth(2) fixo colidia com hoje quando "hoje" caía numa quarta. */
+async function otherColumn(page: Page) {
+  const todayTestId = await todayColumn(page).getAttribute("data-testid");
+  const columns = page.locator('[data-testid^="calendar-column-"]');
+  const count = await columns.count();
+  for (let i = 0; i < count; i++) {
+    const candidate = columns.nth(i);
+    if ((await candidate.getAttribute("data-testid")) !== todayTestId) return candidate;
+  }
+  throw new Error("nenhuma coluna diferente de hoje encontrada");
+}
+
 /** Y (em px) do topo da grade até o horário informado (grade começa às 05:00, 28px por slot de 30min). */
 function yForTime(hour: number, minute = 0) {
   return ((hour - 5) * 60 + minute) * (28 / 30);
@@ -45,13 +57,20 @@ test("arrasta bloco para outro dia e persiste após refresh", async ({ page }) =
 
   const block = page.getByRole("button", { name: /História/ });
   const blockBox = await block.boundingBox();
-  const targetColumn = page.locator('[data-testid^="calendar-column-"]').nth(2);
+  const targetColumn = await otherColumn(page);
   const targetBox = await targetColumn.boundingBox();
   if (!blockBox || !targetBox) throw new Error("elementos não encontrados");
 
-  await page.mouse.move(blockBox.x + blockBox.width / 2, blockBox.y + blockBox.height / 2);
+  const startX = blockBox.x + blockBox.width / 2;
+  const startY = blockBox.y + blockBox.height / 2;
+  await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(targetBox.x + targetBox.width / 2, blockBox.y + blockBox.height / 2, { steps: 10 });
+  // O PointerSensor do dnd-kit só ativa o drag depois de um deslocamento
+  // mínimo (activationConstraint.distance: 4px) — um único move longo direto
+  // ao alvo às vezes não dispara essa ativação de forma confiável. Um
+  // primeiro movimento curto "acorda" o sensor antes do movimento real.
+  await page.mouse.move(startX + 10, startY, { steps: 5 });
+  await page.mouse.move(targetBox.x + targetBox.width / 2, startY, { steps: 10 });
   await page.mouse.up();
 
   // Some coluna original: não deve mais ter bloco lá.
