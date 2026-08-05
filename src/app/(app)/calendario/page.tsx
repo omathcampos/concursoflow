@@ -4,7 +4,7 @@ import { addDays, addMonths, endOfMonth, format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
 import { BlockDetailsDialog } from "@/components/calendar/block-details-dialog";
@@ -13,16 +13,46 @@ import { BlockFormDialog } from "@/components/calendar/block-form-dialog";
 import { ExportCalendarDialog } from "@/components/calendar/export-calendar-dialog";
 import { MobileAgenda } from "@/components/calendar/mobile-agenda";
 import { MonthGrid } from "@/components/calendar/month-grid";
+import { SessionDetailsDialog } from "@/components/calendar/session-details-dialog";
 import { WeekGrid } from "@/components/calendar/week-grid";
+import type { SessionFormInitial } from "@/components/sessions/session-form-dialog";
 import { SessionFormDialog } from "@/components/sessions/session-form-dialog";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { startOfWeek } from "@/lib/calendar";
 import type { DeleteScope } from "@/lib/data/repository";
-import type { Block, Review } from "@/lib/data/types";
+import type { Block, Review, Session } from "@/lib/data/types";
 import { useRepo } from "@/lib/data/use-repo";
 import { detectOverlap } from "@/lib/domain/blocks";
 import type { SessionFormData } from "@/lib/domain/session-validation";
+
+const SHOW_SESSIONS_STORAGE_KEY = "concursoflow-calendar-show-sessions";
+
+/**
+ * Preferência "mostrar sessões realizadas" via useSyncExternalStore (não
+ * useState+useEffect): SSR não tem localStorage, então o snapshot do
+ * servidor é sempre `true` (default), e o React troca pro valor real do
+ * client automaticamente logo após a hidratação — sem o mismatch/flicker
+ * que useState(lazy init) + efeito causava (chegou a ficar preso em `true`
+ * após reload em teste manual).
+ */
+const showSessionsListeners = new Set<() => void>();
+function subscribeShowSessions(onStoreChange: () => void) {
+  showSessionsListeners.add(onStoreChange);
+  return () => showSessionsListeners.delete(onStoreChange);
+}
+function getShowSessionsSnapshot(): boolean {
+  return window.localStorage.getItem(SHOW_SESSIONS_STORAGE_KEY) !== "false";
+}
+function getShowSessionsServerSnapshot(): boolean {
+  return true;
+}
+function setShowSessionsPreference(value: boolean) {
+  window.localStorage.setItem(SHOW_SESSIONS_STORAGE_KEY, String(value));
+  showSessionsListeners.forEach((listener) => listener());
+}
 
 // A semana/dia iniciais vêm de `new Date()` — sem isso, o Next pré-renderiza
 // a página como estática e "congela" a data no momento do build, causando
@@ -49,6 +79,9 @@ export default function CalendarioPage() {
   const [completingBlockId, setCompletingBlockId] = useState<string | null>(null);
   const [completingReviewId, setCompletingReviewId] = useState<string | null>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const showSessions = useSyncExternalStore(subscribeShowSessions, getShowSessionsSnapshot, getShowSessionsServerSnapshot);
+  const [detailsSessionId, setDetailsSessionId] = useState<string | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
 
   const subjects = repo.subjects.list();
   const topics = repo.topics.list();
@@ -63,6 +96,12 @@ export default function CalendarioPage() {
   const detailsBlock = detailsBlockId ? (blocks.find((b) => b.id === detailsBlockId) ?? null) : null;
   const completingBlock = completingBlockId ? (blocks.find((b) => b.id === completingBlockId) ?? null) : null;
   const completingReview = completingReviewId ? (reviews.find((r) => r.id === completingReviewId) ?? null) : null;
+  const detailsSession = detailsSessionId ? (sessions.find((s) => s.id === detailsSessionId) ?? null) : null;
+  const editingSession = editingSessionId ? (sessions.find((s) => s.id === editingSessionId) ?? null) : null;
+
+  function toggleShowSessions(value: boolean) {
+    setShowSessionsPreference(value);
+  }
 
   function shift(amount: number) {
     if (view === "week") setAnchorDate((d) => addDays(d, amount * 7));
@@ -135,6 +174,28 @@ export default function CalendarioPage() {
     repo.blocks.removeSeries(block.id, scope);
   }
 
+  // Sessão avulsa (sem block_id) arrastada/redimensionada direto na grade —
+  // corrige o registro sem passar pelo detectOverlap (sessão não é
+  // planejamento, pode coexistir com blocos/outras sessões no horário).
+  function moveSession(session: Session, nextStartedAt: Date) {
+    repo.sessions.update(session.id, { startedAt: nextStartedAt.toISOString() });
+  }
+
+  function resizeSession(session: Session, nextDurationMin: number) {
+    repo.sessions.update(session.id, { durationMin: nextDurationMin });
+  }
+
+  function submitEditSession(data: SessionFormData) {
+    if (!editingSession) return;
+    repo.sessions.update(editingSession.id, data);
+    setEditingSessionId(null);
+  }
+
+  function deleteSession() {
+    if (!detailsSession) return;
+    repo.sessions.remove(detailsSession.id);
+  }
+
   function goToAnnotation(block: Block) {
     router.push(`/anotacoes?novaPara=${block.subjectId}`);
   }
@@ -187,6 +248,22 @@ export default function CalendarioPage() {
   });
   const detailsSubject = detailsBlock ? subjectsById.get(detailsBlock.subjectId) : undefined;
   const detailsTopic = detailsBlock?.topicId ? topics.find((t) => t.id === detailsBlock.topicId) : undefined;
+  const detailsSessionSubject = detailsSession ? subjectsById.get(detailsSession.subjectId) : undefined;
+  const detailsSessionTopic = detailsSession?.topicId ? topics.find((t) => t.id === detailsSession.topicId) : undefined;
+  const editingSessionInitial: SessionFormInitial | undefined = editingSession
+    ? {
+        subjectId: editingSession.subjectId,
+        topicId: editingSession.topicId,
+        type: editingSession.type,
+        startedAt: editingSession.startedAt,
+        durationMin: editingSession.durationMin,
+        questionsTotal: editingSession.questionsTotal,
+        questionsCorrect: editingSession.questionsCorrect,
+        pagesRead: editingSession.pagesRead,
+        notes: editingSession.notes,
+        scheduleReview: editingSession.scheduleReview,
+      }
+    : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -199,6 +276,12 @@ export default function CalendarioPage() {
           {subjects.length === 0 ? (
             <p className="text-sm text-muted-foreground">Cadastre matérias na página Matérias antes de criar blocos.</p>
           ) : null}
+          <div className="flex items-center gap-2">
+            <Switch id="show-sessions" checked={showSessions} onCheckedChange={toggleShowSessions} />
+            <Label htmlFor="show-sessions" className="text-sm text-muted-foreground">
+              Mostrar sessões realizadas
+            </Label>
+          </div>
           <Button variant="outline" size="sm" onClick={() => setExportDialogOpen(true)}>
             <CalendarPlus className="h-4 w-4" />
             Exportar
@@ -239,6 +322,8 @@ export default function CalendarioPage() {
             weekStart={weekStart}
             blocks={blocks}
             reviews={reviews}
+            sessions={sessions}
+            showSessions={showSessions}
             subjectsById={subjectsById}
             onCreateAt={(date) => setCreateDialog({ date })}
             onOpenBlock={(block) => setDetailsBlockId(block.id)}
@@ -246,6 +331,9 @@ export default function CalendarioPage() {
             onResizeBlock={resizeBlock}
             onCompleteReview={(review) => setCompletingReviewId(review.id)}
             onSkipReview={skipReview}
+            onOpenSession={(session) => setDetailsSessionId(session.id)}
+            onMoveSession={moveSession}
+            onResizeSession={resizeSession}
           />
         ) : (
           <MonthGrid
@@ -312,6 +400,33 @@ export default function CalendarioPage() {
           onCompleteWithSession={() => setCompletingBlockId(detailsBlock.id)}
           onDelete={(scope) => deleteBlock(detailsBlock, scope)}
           onNewAnnotation={() => goToAnnotation(detailsBlock)}
+        />
+      ) : null}
+
+      {detailsSession && detailsSessionSubject ? (
+        <SessionDetailsDialog
+          open
+          onOpenChange={(open) => !open && setDetailsSessionId(null)}
+          session={detailsSession}
+          subject={detailsSessionSubject}
+          topic={detailsSessionTopic}
+          onEdit={() => {
+            setEditingSessionId(detailsSession.id);
+            setDetailsSessionId(null);
+          }}
+          onDelete={deleteSession}
+        />
+      ) : null}
+
+      {editingSession ? (
+        <SessionFormDialog
+          open
+          onOpenChange={(open) => !open && setEditingSessionId(null)}
+          subjects={subjects}
+          topics={topics}
+          title="Editar sessão"
+          initial={editingSessionInitial}
+          onSubmit={submitEditSession}
         />
       ) : null}
 

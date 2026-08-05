@@ -14,9 +14,12 @@ interface EventBlockProps {
   height: number;
   interactive: boolean;
   onOpen: () => void;
+  /** posição/largura dentro do cluster de sobreposição (layoutDayItems) — default ocupa a coluna inteira. */
+  column?: number;
+  columnCount?: number;
 }
 
-export function EventBlock({ block, subject, top, height, interactive, onOpen }: EventBlockProps) {
+export function EventBlock({ block, subject, top, height, interactive, onOpen, column = 0, columnCount = 1 }: EventBlockProps) {
   const {
     setNodeRef: setMoveRef,
     listeners: moveListeners,
@@ -31,9 +34,12 @@ export function EventBlock({ block, subject, top, height, interactive, onOpen }:
     isDragging: isResizing,
   } = useDraggable({ id: `resize:${block.id}`, disabled: !interactive });
 
+  const widthPct = 100 / columnCount;
   const style: React.CSSProperties = {
     top,
     height: Math.max(height, 20),
+    left: columnCount > 1 ? `calc(${column * widthPct}% + 2px)` : undefined,
+    width: columnCount > 1 ? `calc(${widthPct}% - 4px)` : undefined,
     backgroundColor: subject.color,
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     zIndex: isMoving || isResizing ? 30 : undefined,
@@ -50,7 +56,8 @@ export function EventBlock({ block, subject, top, height, interactive, onOpen }:
         onOpen();
       }}
       className={cn(
-        "absolute inset-x-0.5 overflow-hidden rounded-md px-1.5 py-0.5 text-left text-[11px] leading-tight text-white shadow-sm outline-none",
+        "absolute overflow-hidden rounded-md px-1.5 py-0.5 text-left text-[11px] leading-tight text-white shadow-sm outline-none",
+        columnCount === 1 && "inset-x-0.5",
         interactive && "cursor-grab touch-none active:cursor-grabbing",
         isMoving && "opacity-40",
         block.status === "done" && "opacity-55",

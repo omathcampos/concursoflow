@@ -21,7 +21,7 @@ function todayColumn(page: Page) {
 
 async function createBlockAt(page: Page, subjectName: string, hour: number) {
   await page.goto("/calendario");
-  await todayColumn(page).click({ position: { x: 20, y: (hour - 5) * 60 * (28 / 30) + 4 } });
+  await todayColumn(page).click({ position: { x: 20, y: hour * 60 * (28 / 30) + 4 } });
   const dialog = page.getByRole("dialog", { name: "Novo bloco de estudo" });
   await dialog.getByRole("combobox").first().click();
   await page.getByRole("option", { name: subjectName }).click();
