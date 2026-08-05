@@ -27,9 +27,9 @@ async function otherColumn(page: Page) {
   throw new Error("nenhuma coluna diferente de hoje encontrada");
 }
 
-/** Y (em px) do topo da grade até o horário informado (grade começa às 05:00, 28px por slot de 30min). */
+/** Y (em px) do topo da grade até o horário informado (grade começa às 00:00, 28px por slot de 30min). */
 function yForTime(hour: number, minute = 0) {
-  return ((hour - 5) * 60 + minute) * (28 / 30);
+  return (hour * 60 + minute) * (28 / 30);
 }
 
 async function createBlockAt(page: Page, subjectName: string, hour: number) {
