@@ -2,7 +2,7 @@ import { addDays, startOfWeek as dateFnsStartOfWeek } from "date-fns";
 
 import type { BlockType } from "@/lib/data/types";
 
-export const DAY_START_HOUR = 5;
+export const DAY_START_HOUR = 0;
 export const DAY_END_HOUR = 24;
 export const SLOT_MINUTES = 30;
 export const ROW_HEIGHT_PX = 28;
@@ -54,4 +54,9 @@ export function slotFromOffset(offsetPx: number): { hours: number; minutes: numb
 
 export function formatHourLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
+}
+
+/** Posição em px (scrollTop) de uma hora cheia dentro da grade — usado pelo auto-scroll inicial. */
+export function scrollTopForHour(hour: number): number {
+  return ((hour - DAY_START_HOUR) * 60 / SLOT_MINUTES) * ROW_HEIGHT_PX;
 }
